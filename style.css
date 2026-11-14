@@ -88,6 +88,10 @@ li { margin: 6px 0; }
 
 .btn-center { text-align: center; }
 
+.wp-buy img { max-width: 100%; height: auto; display: block; margin: 12px auto; }
+
+.wplus_spdisclaimer { font-size: 14px; color: var(--muted); text-align: center; margin: 8px 0 0; }
+
 .no-thanks {
   display: block;
   text-align: center;
