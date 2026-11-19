@@ -1,0 +1,2863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MazeQuest Studio — Maze &amp; Logic Activity Book Generator</title>
+<meta name="description" content="Make a full kids activity book in 60 seconds. Mazes, word searches and dot-to-dot puzzles, print-ready PDF in US Letter or A4.">
+<style>
+/* MazeQuest Studio — bright, kid-friendly UI.
+   Palette: warm cream background, rainbow header, a different color
+   for every step, big friendly buttons. All system fonts so the
+   single-file demo works offline with no webfont downloads. */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #33302e;
+  line-height: 1.5;
+  overflow-x: hidden;
+  background-color: #FFF8E1;
+  background-image: radial-gradient(#FFE082 1.6px, transparent 1.7px), radial-gradient(#B2EBF2 1.6px, transparent 1.7px);
+  background-size: 46px 46px, 46px 46px;
+  background-position: 0 0, 23px 23px;
+}
+.wrap { max-width: 880px; margin: 0 auto; padding: 0 16px; }
+
+/* ---- header: rainbow gradient ---- */
+.topbar {
+  background: linear-gradient(90deg, #FF7043 0%, #EC407A 30%, #7C4DFF 62%, #0288D1 100%);
+  color: #fff; padding: 18px 0 20px;
+  border-bottom: 5px solid #FFD54F;
+}
+.logo { font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif; font-size: 30px; font-weight: bold; letter-spacing: 0.5px; text-shadow: 0 2px 0 rgba(0,0,0,0.18); }
+.logo span { color: #FFD54F; }
+.tagline { font-size: 14px; opacity: 0.95; }
+
+/* ---- hero ---- */
+.hero { padding: 28px 0 8px; text-align: center; }
+.hero h1 {
+  font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+  font-size: 34px; margin: 0 0 10px; color: #4A148C; line-height: 1.2;
+}
+.hero h1 .pop { color: #E64A19; }
+.hero p { font-size: 17px; margin: 0 auto; max-width: 620px; color: #5D4037; }
+
+/* ---- panels: white cards with a colored ribbon ---- */
+.panel {
+  background: #fff;
+  border: 1px solid #FFE0B2;
+  border-top: 6px solid #FF7043;
+  border-radius: 14px;
+  padding: 22px;
+  margin: 18px 0;
+  box-shadow: 0 3px 12px rgba(121, 85, 0, 0.10);
+}
+.panel:nth-of-type(2) { border-top-color: #7C4DFF; }
+.panel:nth-of-type(3) { border-top-color: #0288D1; }
+.panel h2 {
+  font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+  font-size: 20px; margin: 4px 0 14px; color: #3E2723;
+}
+.step-badge {
+  display: inline-block; width: 30px; height: 30px; line-height: 30px;
+  border-radius: 50%; color: #fff; font-size: 16px; text-align: center;
+  margin-right: 8px; vertical-align: middle;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+}
+.step-1 { background: #43A047; }
+.step-2 { background: #1E88E5; }
+.step-3 { background: #FB8C00; }
+.step-4 { background: #EC407A; }
+
+/* ---- theme cards: one color each, with a little picture ---- */
+.themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.theme-card {
+  border: 2px solid #FFE0B2; border-top: 6px solid #999; border-radius: 12px;
+  background: #FFFDF5; padding: 10px 10px 12px; text-align: center;
+  cursor: pointer; font-family: inherit; transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.theme-card:hover { transform: translateY(-2px); box-shadow: 0 5px 12px rgba(121, 85, 0, 0.18); }
+.theme-icon { display: block; margin-bottom: 4px; }
+.theme-icon svg { display: block; margin: 0 auto; }
+.theme-card strong { display: block; font-size: 15px; margin-bottom: 2px; color: #3E2723; }
+.theme-card span { font-size: 11px; color: #8D6E63; }
+.theme-card.selected { border-color: #FF7043; box-shadow: 0 0 0 3px #FFD54F, 0 5px 12px rgba(121, 85, 0, 0.18); background: #FFF8E1; }
+.theme-card.locked { opacity: 0.55; }
+
+/* ---- cover color palettes ---- */
+.palettes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.palette-card {
+  border: 2px solid #FFE0B2; border-radius: 12px; background: #FFFDF5;
+  padding: 12px 8px; cursor: pointer; font-family: inherit; text-align: center;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.palette-card:hover { transform: translateY(-2px); box-shadow: 0 5px 12px rgba(121, 85, 0, 0.18); }
+.palette-card.selected { border-color: #EC407A; box-shadow: 0 0 0 3px #F8BBD0; background: #FCE4EC; }
+.palette-dots { display: flex; justify-content: center; gap: 5px; margin-bottom: 7px; }
+.palette-dots span { display: block; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+.palette-card strong { font-size: 14px; color: #3E2723; }
+
+/* ---- puzzle checkboxes ---- */
+.checks { display: flex; gap: 10px 22px; flex-wrap: wrap; font-size: 15px; }
+.checks label {
+  cursor: pointer; background: #FFF8E1; border: 1px solid #FFE0B2;
+  border-radius: 20px; padding: 6px 12px;
+}
+.checks label:hover { border-color: #FFB74D; }
+.oto-checks { margin-top: 10px; }
+.oto-checks label { background: #F3E5F5; border-color: #CE93D8; }
+.lock-tag { font-size: 11px; font-weight: bold; color: #B71C1C; border: 1px solid #B71C1C; border-radius: 4px; padding: 0 4px; background: #fff; }
+
+/* ---- form rows, fields, buttons ---- */
+.row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.field label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 4px; color: #5D4037; }
+.field select { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #FFE0B2; border-radius: 8px; background: #FFFDF5; }
+.field input[type="range"] { width: 100%; accent-color: #EC407A; }
+.field input[type="text"] { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #FFE0B2; border-radius: 8px; background: #FFFDF5; }
+.actions { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-primary, .btn-secondary {
+  font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+  font-size: 17px; font-weight: bold; padding: 13px 22px; border-radius: 10px;
+  cursor: pointer; border: none; min-height: 48px;
+}
+.btn-primary {
+  background: linear-gradient(90deg, #FF7043, #EC407A); color: #fff;
+  box-shadow: 0 4px 0 #BF360C;
+}
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:active { transform: translateY(3px); box-shadow: 0 1px 0 #BF360C; }
+.btn-primary:disabled, .btn-secondary:disabled { opacity: 0.45; cursor: default; }
+.btn-secondary { background: #E3F2FD; color: #1565C0; border: 2px solid #90CAF9; box-shadow: 0 4px 0 #BBDEFB; }
+.btn-secondary:active { transform: translateY(3px); box-shadow: 0 1px 0 #BBDEFB; }
+#generateBtn { font-size: 19px; padding: 14px 28px; }
+
+/* ---- notes, unlock panel, preview ---- */
+.note { font-size: 13px; color: #795548; }
+.hidden { display: none; }
+#unlockPanel { border-top-color: #7C4DFF; background: #F9F4FF; }
+.unlock-list { list-style: none; padding: 0; margin: 10px 0; font-size: 14px; }
+.unlock-list li { padding: 4px 0; }
+.license { display: block; font-size: 14px; margin-bottom: 12px; cursor: pointer; background: #E8F5E9; border: 1px solid #A5D6A7; border-radius: 8px; padding: 10px 12px; }
+.preview-nav { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+.preview-nav .btn-primary { margin-left: auto; }
+.preview { border: 2px solid #FFCC80; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 4px 14px rgba(121, 85, 0, 0.14); }
+.preview svg { display: block; width: 100%; height: auto; }
+#pageIndicator { font-weight: bold; color: #5D4037; font-size: 14px; }
+.howto li { margin-bottom: 8px; }
+.footer { padding: 20px 0 30px; color: #8D6E63; font-size: 13px; text-align: center; }
+
+/* ---- phones (Zhen uses Android) ---- */
+@media (max-width: 640px) {
+  .themes { grid-template-columns: repeat(2, 1fr); }
+  .palettes { grid-template-columns: repeat(2, 1fr); }
+  .row { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 25px; }
+  .hero p { font-size: 15px; }
+  .panel { padding: 16px; }
+  .logo { font-size: 25px; }
+  .actions .btn-primary, .actions .btn-secondary { width: 100%; }
+  .preview-nav .btn-primary { margin-left: 0; width: 100%; }
+  .preview-nav .btn-secondary { flex: 1; }
+  .btn-primary, .btn-secondary { min-height: 48px; }
+}
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="logo">MazeQuest <span>Studio</span></div>
+    <div class="tagline">Maze &amp; Logic Activity Book Generator</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Make a full activity book in <span class="pop">60 seconds.</span></h1>
+    <p>Pick a theme, pick a difficulty, hit one button. You get a print-ready PDF with mazes, word searches and dot-to-dot puzzles — plus an answer key at the back. No drawing. No waiting.</p>
+  </section>
+
+  <section class="panel" id="unlockPanel">
+    <h2>Your upgrades</h2>
+    <p class="note">The front-end version makes up to 20 books a month for personal use. Bought an upgrade? Enter your unlock code below to open it.</p>
+    <div class="row">
+      <div class="field">
+        <label for="unlockCode">Unlock code</label>
+        <input type="text" id="unlockCode" placeholder="MZQ-OTO1-DEMO1" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button id="unlockBtn" class="btn-primary">Unlock</button>
+      </div>
+    </div>
+    <p class="note" id="unlockStatus"></p>
+    <ul class="unlock-list" id="unlockList"></ul>
+    <p class="note" id="bookCounter"></p>
+  </section>
+
+  <section class="panel" id="builder">
+    <h2><span class="step-badge step-1">1</span> Step 1 — Pick a theme</h2>
+    <div class="themes" id="themes"></div>
+    <p class="note">Seasonal themes (Spring, Summer, Halloween, Winter) unlock with the Seasonal Pack upgrade.</p>
+
+    <div id="librarySection" class="hidden">
+      <h2>Theme library — 500+ topics</h2>
+      <div class="field">
+        <label for="libraryTopic">Pick any topic as your book theme</label>
+        <select id="libraryTopic"></select>
+      </div>
+      <p class="note">Picking a topic here replaces the theme above for this book.</p>
+    </div>
+
+    <div id="monthlySection" class="hidden">
+      <h2>New this month — <span id="monthlyTitle"></span></h2>
+      <p id="monthlyBlurb"></p>
+      <button id="monthlyUseBtn" class="btn-secondary">Use this template</button>
+    </div>
+
+    <h2><span class="step-badge step-2">2</span> Step 2 — Pick the puzzles</h2>
+    <div class="checks">
+      <label><input type="checkbox" id="type-maze" checked> Mazes</label>
+      <label><input type="checkbox" id="type-wordsearch" checked> Word searches</label>
+      <label><input type="checkbox" id="type-dot" checked> Dot-to-dot</label>
+    </div>
+    <div class="checks oto-checks">
+      <label><input type="checkbox" id="type-nonogram" data-oto="oto1"> Nonograms <span class="lock-tag">OTO1</span></label>
+      <label><input type="checkbox" id="type-sudoku" data-oto="oto1"> Kids Sudoku <span class="lock-tag">OTO1</span></label>
+      <label><input type="checkbox" id="type-spotdiff" data-oto="oto1"> Spot the Difference <span class="lock-tag">OTO1</span></label>
+      <label><input type="checkbox" id="type-colorbynumber" data-oto="oto1"> Color by Number <span class="lock-tag">OTO1</span></label>
+      <label><input type="checkbox" id="type-logic" data-oto="oto1"> Logic Puzzles <span class="lock-tag">OTO1</span></label>
+    </div>
+    <p class="note">The five extra puzzle types unlock with the OTO1 upgrade. Enter your code above to open them.</p>
+
+    <h2><span class="step-badge step-3">3</span> Step 3 — Difficulty &amp; size</h2>
+    <div class="row">
+      <div class="field">
+        <label for="difficulty">Difficulty</label>
+        <select id="difficulty">
+          <option value="easy">Easy — Ages 4-6</option>
+          <option value="medium" selected>Medium — Ages 6-9</option>
+          <option value="hard">Hard — Ages 8-12</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pageCount">Puzzle pages: <span id="pageCountLabel">12</span></label>
+        <input type="range" id="pageCount" min="4" max="30" value="12">
+      </div>
+      <div class="field">
+        <label for="pageSize">Paper size</label>
+        <select id="pageSize">
+          <option value="letter" selected>US Letter — 8.5 x 11 in</option>
+          <option value="a4">A4 — 8.27 x 11.69 in</option>
+        </select>
+      </div>
+    </div>
+
+    <h2><span class="step-badge step-4">4</span> Step 4 — Pick a cover color</h2>
+    <div class="palettes" id="coverPalettes"></div>
+    <p class="note">The cover prints in full color. Puzzle pages print in black and white on purpose, so kids can color them in with pencils and crayons.</p>
+
+    <div class="actions">
+      <button id="generateBtn" class="btn-primary">Generate my book</button>
+      <button id="againBtn" class="btn-secondary" disabled>Shuffle — new book, same settings</button>
+    </div>
+    <p class="note">Every book is different. The same settings give you a new book each time — new mazes, new words, new dot pictures.</p>
+    <p class="note" id="generateStatus"></p>
+  </section>
+
+  <section class="panel hidden" id="previewPanel">
+    <h2>Your book — <span id="bookTitle"></span></h2>
+    <p class="note" id="bookMeta"></p>
+    <label class="license"><input type="checkbox" id="commercialLicense"> Commercial license — print “Commercial License — OK to sell on KDP/Etsy” on the cover. <span id="commercialNote"></span></label>
+    <div class="preview-nav">
+      <button id="prevPage" class="btn-secondary">&larr; Prev</button>
+      <span id="pageIndicator"></span>
+      <button id="nextPage" class="btn-secondary">Next &rarr;</button>
+      <button id="downloadBtn" class="btn-primary">Download PDF</button>
+    </div>
+    <div class="preview" id="preview"></div>
+  </section>
+
+  <section class="panel">
+    <h2>How to use it</h2>
+    <ol class="howto">
+      <li><strong>Pick a theme and difficulty.</strong> Easy mazes are wide and short. Hard mazes are tight and long.</li>
+      <li><strong>Generate your book.</strong> Flip through the preview to check every page.</li>
+      <li><strong>Download the PDF.</strong> Print it at home, or upload it to KDP. The page size you picked is the exact size of the PDF — Letter is 8.5 x 11 inches, A4 is 8.27 x 11.69 inches.</li>
+      <li><strong>Check the answer key.</strong> The last page shows every maze solution and every hidden word.</li>
+    </ol>
+    <p class="note">Tip: make a new book for each child. The shuffle button gives you a fresh book with the same settings, so no two kids get the same puzzles.</p>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <p>MazeQuest Studio — Maze &amp; Logic Activity Book Generator. Made for parents, teachers and self-publishers.</p>
+  </div>
+</footer>
+
+<script>
+/* MazeQuest Studio — core generator (pure algorithm, no API, no network).
+   Works in the browser (window.MazeQuestCore) and in Node (module.exports).
+   All output is US English. */
+(function (root, factory) {
+  var lib = factory();
+  if (typeof module !== 'undefined' && module.exports) module.exports = lib;
+  root.MazeQuestCore = lib;
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  /* ---------------- seeded RNG ---------------- */
+  function mulberry32(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function randInt(rng, min, max) { return min + Math.floor(rng() * (max - min + 1)); }
+  function shuffle(arr, rng) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(rng() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function pick(arr, rng) { return arr[Math.floor(rng() * arr.length)]; }
+
+  /* ---------------- themes ---------------- */
+  var THEMES = {
+    dinosaur: {
+      label: 'Dinosaurs', color: '#2E7D32',
+      words: ['DINO', 'ROAR', 'FOSSIL', 'TREX', 'JURASSIC', 'VOLCANO', 'EGG', 'CLAW', 'TAIL', 'HORN', 'BONES', 'METEOR', 'RAPTOR', 'STOMP', 'SCALE', 'NEST'],
+      shapes: [
+        { name: 'Dinosaur', points: [[30, 88], [22, 78], [18, 62], [22, 48], [30, 38], [28, 26], [34, 14], [44, 10], [52, 14], [50, 22], [58, 26], [70, 22], [82, 26], [88, 34], [80, 38], [70, 40], [62, 44], [58, 56], [60, 70], [58, 88], [48, 88], [48, 70], [40, 66], [38, 88]] },
+        { name: 'Volcano', points: [[14, 88], [34, 34], [42, 34], [46, 24], [54, 24], [58, 34], [66, 34], [86, 88], [70, 88], [68, 70], [60, 58], [50, 62], [40, 58], [32, 70], [30, 88]] },
+        { name: 'Dino Egg', points: [[50, 8], [66, 16], [76, 34], [78, 58], [70, 78], [50, 90], [30, 78], [22, 58], [24, 34], [34, 16]] }
+      ]
+    },
+    space: {
+      label: 'Space', color: '#1A237E',
+      words: ['ROCKET', 'PLANET', 'STAR', 'MOON', 'COMET', 'GALAXY', 'ALIEN', 'ORBIT', 'MARS', 'SATURN', 'NEBULA', 'COSMOS', 'LUNAR', 'ASTRONAUT', 'SHUTTLE', 'CRATER'],
+      shapes: [
+        { name: 'Rocket', points: [[50, 6], [58, 14], [60, 30], [66, 44], [62, 44], [62, 62], [74, 78], [66, 74], [60, 66], [56, 78], [52, 88], [48, 88], [44, 78], [40, 66], [34, 74], [26, 78], [38, 62], [38, 44], [34, 44], [40, 30], [42, 14]] },
+        { name: 'Planet', points: [[50, 12], [66, 14], [78, 26], [82, 42], [78, 58], [66, 72], [50, 76], [34, 72], [22, 58], [18, 42], [22, 26], [34, 14]] },
+        { name: 'Star', points: [[50, 8], [58, 32], [82, 32], [63, 48], [70, 72], [50, 58], [30, 72], [37, 48], [18, 32], [42, 32]] }
+      ]
+    },
+    animals: {
+      label: 'Animals', color: '#BF360C',
+      words: ['LION', 'TIGER', 'BEAR', 'WOLF', 'FOX', 'EAGLE', 'PANDA', 'KOALA', 'ZEBRA', 'MONKEY', 'GIRAFFE', 'DOLPHIN', 'RABBIT', 'TURTLE', 'OTTER', 'MOOSE'],
+      shapes: [
+        { name: 'Cat', points: [[24, 30], [30, 12], [40, 24], [60, 24], [70, 12], [76, 30], [82, 44], [80, 62], [68, 76], [50, 80], [32, 76], [20, 62], [18, 44]] },
+        { name: 'Fish', points: [[14, 50], [30, 30], [52, 26], [70, 38], [84, 22], [80, 50], [84, 78], [70, 62], [52, 74], [30, 70]] },
+        { name: 'Butterfly', points: [[50, 20], [58, 34], [74, 22], [84, 34], [78, 54], [62, 56], [58, 66], [66, 80], [50, 76], [34, 80], [42, 66], [38, 56], [22, 54], [16, 34], [26, 22], [42, 34]] }
+      ]
+    },
+    christmas: {
+      label: 'Christmas', color: '#B71C1C',
+      words: ['SANTA', 'REINDEER', 'SLEIGH', 'SNOWMAN', 'GIFT', 'CANDY', 'WREATH', 'STAR', 'TREE', 'ELF', 'JINGLE', 'HOLLY', 'BELLS', 'FROSTY', 'STOCKING', 'COOKIE'],
+      shapes: [
+        { name: 'Christmas Tree', points: [[50, 6], [58, 22], [66, 22], [58, 34], [70, 34], [60, 48], [74, 48], [62, 62], [78, 62], [64, 80], [58, 80], [58, 90], [42, 90], [42, 80], [36, 80], [22, 62], [38, 62], [26, 48], [40, 48], [30, 34], [42, 34], [34, 22], [42, 22]] },
+        { name: 'Gift Box', points: [[20, 30], [80, 30], [80, 86], [20, 86], [20, 54], [44, 54], [44, 30], [44, 18], [50, 12], [56, 18], [56, 30]] },
+        { name: 'Snowman', points: [[50, 10], [62, 14], [68, 26], [64, 36], [72, 44], [76, 58], [70, 74], [58, 82], [42, 82], [30, 74], [24, 58], [28, 44], [36, 36], [32, 26], [38, 14]] }
+      ]
+    },
+    /* ---- OTO3 seasonal packs (locked until OTO3 is unlocked in the UI) ---- */
+    spring: {
+      label: 'Spring', color: '#558B2F', seasonal: true,
+      words: ['BUNNY', 'EASTER', 'EGGS', 'BASKET', 'FLOWER', 'TULIP', 'DAISY', 'RAIN', 'RAINBOW', 'BIRD', 'NEST', 'CHICK', 'LAMB', 'BLOOM', 'GARDEN', 'BUTTERFLY', 'BEES', 'SUNNY', 'PUDDLE', 'KITE'],
+      shapes: [
+        { name: 'Butterfly', points: [[50, 20], [58, 34], [74, 22], [84, 34], [78, 54], [62, 56], [58, 66], [66, 80], [50, 76], [34, 80], [42, 66], [38, 56], [22, 54], [16, 34], [26, 22], [42, 34]] },
+        { name: 'Flower', points: [[50, 10], [60, 20], [75, 15], [70, 35], [85, 45], [70, 50], [75, 70], [55, 60], [50, 80], [45, 60], [25, 70], [30, 50], [15, 45], [30, 35], [25, 15], [40, 20]] },
+        { name: 'Bunny', points: [[35, 20], [40, 8], [48, 10], [50, 24], [58, 8], [64, 10], [66, 24], [72, 40], [70, 60], [64, 80], [36, 80], [30, 60], [28, 40]] }
+      ]
+    },
+    summer: {
+      label: 'Summer', color: '#F57F17', seasonal: true,
+      words: ['SUN', 'BEACH', 'OCEAN', 'SAND', 'SURF', 'WAVE', 'SHELL', 'CRAB', 'ICECREAM', 'LEMONADE', 'PICNIC', 'CAMP', 'SWIM', 'BOAT', 'SAIL', 'KITE', 'BERRIES', 'MELON', 'SUNSET', 'FIREFLY'],
+      shapes: [
+        { name: 'Sun', points: [[50, 10], [64, 14], [74, 24], [78, 38], [74, 54], [64, 66], [50, 70], [36, 66], [26, 54], [22, 38], [26, 24], [36, 14]] },
+        { name: 'Fish', points: [[14, 50], [30, 30], [52, 26], [70, 38], [84, 22], [80, 50], [84, 78], [70, 62], [52, 74], [30, 70]] },
+        { name: 'Star', points: [[50, 8], [58, 32], [82, 32], [63, 48], [70, 72], [50, 58], [30, 72], [37, 48], [18, 32], [42, 32]] }
+      ]
+    },
+    halloween: {
+      label: 'Halloween', color: '#6A1B9A', seasonal: true,
+      words: ['PUMPKIN', 'GHOST', 'WITCH', 'BAT', 'SPIDER', 'CANDY', 'COSTUME', 'HAUNTED', 'SPOOKY', 'MAGIC', 'POTION', 'BROOM', 'MOON', 'BLACK', 'ORANGE', 'TREAT', 'TRICK', 'LANTERN', 'COBWEB', 'VAMPIRE'],
+      shapes: [
+        { name: 'Pumpkin', points: [[50, 12], [66, 14], [76, 26], [80, 44], [76, 62], [66, 74], [50, 76], [34, 74], [24, 62], [20, 44], [24, 26], [34, 14]] },
+        { name: 'Ghost', points: [[50, 8], [64, 12], [72, 26], [74, 50], [74, 78], [66, 70], [58, 78], [50, 70], [42, 78], [34, 70], [26, 78], [26, 50], [28, 26], [36, 12]] },
+        { name: 'Bat', points: [[50, 30], [58, 18], [70, 10], [66, 24], [82, 16], [76, 34], [70, 44], [62, 58], [58, 72], [50, 64], [42, 72], [38, 58], [30, 44], [24, 34], [18, 16], [34, 24], [30, 10], [42, 18]] }
+      ]
+    },
+    winter: {
+      label: 'Winter', color: '#1565C0', seasonal: true,
+      words: ['SNOW', 'SNOWMAN', 'SLEIGH', 'SANTA', 'REINDEER', 'GIFT', 'WREATH', 'BELLS', 'FROSTY', 'STOCKING', 'COOKIE', 'HOLLY', 'JINGLE', 'FROST', 'ICICLE', 'SKATES', 'SLED', 'MITTENS', 'SCARF', 'COCOA'],
+      shapes: [
+        { name: 'Snowman', points: [[50, 10], [62, 14], [68, 26], [64, 36], [72, 44], [76, 58], [70, 74], [58, 82], [42, 82], [30, 74], [24, 58], [28, 44], [36, 36], [32, 26], [38, 14]] },
+        { name: 'Christmas Tree', points: [[50, 6], [58, 22], [66, 22], [58, 34], [70, 34], [60, 48], [74, 48], [62, 62], [78, 62], [64, 80], [58, 80], [58, 90], [42, 90], [42, 80], [36, 80], [22, 62], [38, 62], [26, 48], [40, 48], [30, 34], [42, 34], [34, 22], [42, 22]] },
+        { name: 'Gift Box', points: [[20, 30], [80, 30], [80, 86], [20, 86], [20, 54], [44, 54], [44, 30], [44, 18], [50, 12], [56, 18], [56, 30]] }
+      ]
+    }
+  };
+
+  /* ---------------- cover color palettes ---------------- */
+  /* The cover prints in full color; puzzle pages stay black & white
+     so kids can color them in. Each palette: bg (page background),
+     band (top/bottom bands), primary (frame + title accents),
+     secondary + accent (artwork), dark (title text). */
+  var COVER_PALETTES = {
+    rainbow: { label: 'Rainbow', bg: '#FFF8E1', band: '#FF7043', primary: '#FF7043', secondary: '#7C4DFF', accent: '#26A69A', dark: '#3E2723' },
+    ocean:   { label: 'Ocean',   bg: '#E1F5FE', band: '#0288D1', primary: '#0288D1', secondary: '#26C6DA', accent: '#FFCA28', dark: '#0D47A1' },
+    candy:   { label: 'Candy',   bg: '#FCE4EC', band: '#EC407A', primary: '#EC407A', secondary: '#FFB300', accent: '#66BB6A', dark: '#880E4F' },
+    forest:  { label: 'Forest',  bg: '#E8F5E9', band: '#43A047', primary: '#43A047', secondary: '#8D6E63', accent: '#FFB300', dark: '#1B5E20' }
+  };
+
+  var DIFFICULTY = {
+    easy:   { label: 'Easy',   maze: 9,  ws: 8,  dots: 10, dirs: [[1, 0], [0, 1]], age: 'Ages 4-6' },
+    medium: { label: 'Medium', maze: 13, ws: 10, dots: 18, dirs: [[1, 0], [0, 1], [1, 1], [-1, 1]], age: 'Ages 6-9' },
+    hard:   { label: 'Hard',   maze: 17, ws: 12, dots: 26, dirs: [[1, 0], [0, 1], [1, 1], [-1, 1], [-1, 0], [0, -1], [1, -1], [-1, -1]], age: 'Ages 8-12' }
+  };
+
+  /* ---------------- maze (recursive backtracker, perfect maze) ---------------- */
+  // walls bitmask per cell: N=1 E=2 S=4 W=8
+  function genMaze(cols, rows, rng) {
+    var walls = new Uint8Array(cols * rows);
+    for (var i = 0; i < walls.length; i++) walls[i] = 15;
+    var visited = new Uint8Array(cols * rows);
+    var stack = [[0, 0]];
+    visited[0] = 1;
+    var DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0], BIT = [1, 2, 4, 8], OPP = [4, 8, 1, 2];
+    while (stack.length) {
+      var cur = stack[stack.length - 1];
+      var x = cur[0], y = cur[1];
+      var options = [];
+      for (var d = 0; d < 4; d++) {
+        var nx = x + DX[d], ny = y + DY[d];
+        if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && !visited[ny * cols + nx]) options.push(d);
+      }
+      if (!options.length) { stack.pop(); continue; }
+      var dir = options[Math.floor(rng() * options.length)];
+      var nx2 = x + DX[dir], ny2 = y + DY[dir];
+      walls[y * cols + x] &= ~BIT[dir];
+      walls[ny2 * cols + nx2] &= ~OPP[dir];
+      visited[ny2 * cols + nx2] = 1;
+      stack.push([nx2, ny2]);
+    }
+    // open the entrance (top of start cell) and exit (bottom of end cell)
+    walls[0] &= ~1;
+    walls[rows * cols - 1] &= ~4;
+    return { type: 'maze', cols: cols, rows: rows, walls: Array.prototype.slice.call(walls), start: [0, 0], end: [cols - 1, rows - 1] };
+  }
+
+  function solveMaze(maze) {
+    var cols = maze.cols, rows = maze.rows, walls = maze.walls;
+    var start = 0, goal = rows * cols - 1;
+    var prev = new Int32Array(cols * rows).fill(-1);
+    var queue = [start];
+    prev[start] = start;
+    var DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0], BIT = [1, 2, 4, 8];
+    while (queue.length) {
+      var cur = queue.shift();
+      if (cur === goal) break;
+      var cx = cur % cols, cy = Math.floor(cur / cols);
+      for (var d = 0; d < 4; d++) {
+        if (walls[cur] & BIT[d]) continue;
+        var nx = cx + DX[d], ny = cy + DY[d];
+        if (nx < 0 || nx >= cols || ny < 0 || ny >= rows) continue;
+        var ni = ny * cols + nx;
+        if (prev[ni] !== -1) continue;
+        prev[ni] = cur;
+        queue.push(ni);
+      }
+    }
+    if (prev[goal] === -1) return null;
+    var path = [], cur2 = goal;
+    while (cur2 !== start) { path.push([cur2 % cols, Math.floor(cur2 / cols)]); cur2 = prev[cur2]; }
+    path.push([0, 0]);
+    path.reverse();
+    return path;
+  }
+
+  /* ---------------- word search ---------------- */
+  function genWordSearch(words, size, dirs, rng) {
+    var usable = words.filter(function (w) { return w.length <= size; });
+    var shuffled = shuffle(usable, rng);
+    var grid = [];
+    for (var i = 0; i < size; i++) { grid.push(new Array(size).fill('')); }
+    var placed = [];
+    var maxWords = Math.min(shuffled.length, Math.floor(size * 1.2));
+    for (var wi = 0; wi < shuffled.length && placed.length < maxWords; wi++) {
+      var word = shuffled[wi];
+      var done = false;
+      for (var attempt = 0; attempt < 60 && !done; attempt++) {
+        var dir = dirs[Math.floor(rng() * dirs.length)];
+        var dx = dir[0], dy = dir[1];
+        var x0 = randInt(rng, 0, size - 1), y0 = randInt(rng, 0, size - 1);
+        var x1 = x0 + dx * (word.length - 1), y1 = y0 + dy * (word.length - 1);
+        if (x1 < 0 || x1 >= size || y1 < 0 || y1 >= size) continue;
+        var ok = true;
+        for (var k = 0; k < word.length; k++) {
+          var c = grid[y0 + dy * k][x0 + dx * k];
+          if (c !== '' && c !== word[k]) { ok = false; break; }
+        }
+        if (!ok) continue;
+        for (var k2 = 0; k2 < word.length; k2++) grid[y0 + dy * k2][x0 + dx * k2] = word[k2];
+        placed.push({ word: word, x: x0, y: y0, dx: dx, dy: dy });
+        done = true;
+      }
+    }
+    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for (var y = 0; y < size; y++)
+      for (var x = 0; x < size; x++)
+        if (grid[y][x] === '') grid[y][x] = letters[Math.floor(rng() * 26)];
+    return { type: 'wordsearch', size: size, grid: grid, placed: placed };
+  }
+
+  function findWordInGrid(grid, word) {
+    var n = grid.length;
+    var dirs = [[1, 0], [0, 1], [1, 1], [-1, 1], [-1, 0], [0, -1], [1, -1], [-1, -1]];
+    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
+      for (var d = 0; d < dirs.length; d++) {
+        var dx = dirs[d][0], dy = dirs[d][1];
+        var ok = true;
+        for (var k = 0; k < word.length; k++) {
+          var nx = x + dx * k, ny = y + dy * k;
+          if (nx < 0 || nx >= n || ny < 0 || ny >= n || grid[ny][nx] !== word[k]) { ok = false; break; }
+        }
+        if (ok) return true;
+      }
+    }
+    return false;
+  }
+
+  /* ---------------- dot-to-dot ---------------- */
+  function resampleShape(points, count) {
+    // evenly spaced points along the closed outline
+    var pts = points.slice();
+    var segs = [], total = 0;
+    for (var i = 0; i < pts.length; i++) {
+      var a = pts[i], b = pts[(i + 1) % pts.length];
+      var len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      segs.push({ a: a, b: b, len: len });
+      total += len;
+    }
+    var out = [];
+    for (var k = 0; k < count; k++) {
+      var target = (total * k) / count;
+      var acc = 0;
+      for (var s = 0; s < segs.length; s++) {
+        var seg = segs[s];
+        if (acc + seg.len >= target || s === segs.length - 1) {
+          var t = seg.len === 0 ? 0 : (target - acc) / seg.len;
+          out.push([seg.a[0] + (seg.b[0] - seg.a[0]) * t, seg.a[1] + (seg.b[1] - seg.a[1]) * t]);
+          break;
+        }
+        acc += seg.len;
+      }
+    }
+    return out;
+  }
+
+  function genDotToDot(shape, count, rng) {
+    var rotated = shape.points.slice();
+    var shift = Math.floor(rng() * rotated.length);
+    rotated = rotated.slice(shift).concat(rotated.slice(0, shift));
+    var points = resampleShape(rotated, count);
+    return { type: 'dot', name: shape.name, count: count, points: points.map(function (p) { return [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10]; }) };
+  }
+
+  /* OTO puzzle types (generators live in mazequest-oto.js, passed in as
+     opts.oto). The UI only offers them when OTO1 is unlocked. */
+  var OTO_TYPES = ['nonogram', 'sudoku', 'spotdiff', 'colorbynumber', 'logic'];
+
+  /* ---------------- book builder ---------------- */
+  function buildBook(opts) {
+    opts = opts || {};
+    /* opts.customTheme: {label, color, words, shapes} — used for the
+       OTO1 500-theme library (themeFromLibrary in mazequest-oto.js). */
+    var customTheme = opts.customTheme || null;
+    var themeKey = customTheme ? null : (THEMES[opts.theme] ? opts.theme : 'dinosaur');
+    var diffKey = DIFFICULTY[opts.difficulty] ? opts.difficulty : 'medium';
+    var theme = customTheme || THEMES[themeKey];
+    var diff = DIFFICULTY[diffKey];
+    var pageCount = Math.max(4, Math.min(30, opts.pageCount || 12));
+    var types = (opts.types && opts.types.length) ? opts.types.filter(function (t) { return t === 'maze' || t === 'wordsearch' || t === 'dot' || OTO_TYPES.indexOf(t) !== -1; }) : ['maze', 'wordsearch', 'dot'];
+    var seed = (opts.seed == null) ? (Math.floor(Math.random() * 2147483647) + 1) : opts.seed;
+    var rng = mulberry32(seed);
+    var title = opts.title || (theme.label + ' Activity Book');
+    var subtitle = diff.label + ' Puzzles  |  ' + diff.age;
+    var coverPalette = COVER_PALETTES[opts.coverPalette] ? opts.coverPalette : 'rainbow';
+
+    var pages = [];
+    pages.push({ type: 'cover', title: title, subtitle: subtitle, theme: themeKey || 'library', themeLabel: theme.label, color: theme.color, coverPalette: coverPalette, commercialLicense: !!opts.commercialLicense });
+    var order = [];
+    for (var i = 0; i < pageCount; i++) order.push(types[i % types.length]);
+    order = shuffle(order, rng);
+    var usedShapes = shuffle(theme.shapes, rng);
+    var shapeIdx = 0;
+    for (var p = 0; p < pageCount; p++) {
+      var t = order[p];
+      if (t === 'maze') {
+        var maze = genMaze(diff.maze, diff.maze, rng);
+        var solution = solveMaze(maze);
+        pages.push({ type: 'maze', num: p + 1, maze: maze, solution: solution, difficulty: diff.label });
+      } else if (t === 'wordsearch') {
+        var ws = genWordSearch(theme.words, diff.ws, diff.dirs, rng);
+        pages.push({ type: 'wordsearch', num: p + 1, ws: ws, difficulty: diff.label });
+      } else if (OTO_TYPES.indexOf(t) !== -1) {
+        /* OTO1 puzzle: needs the oto module (window.MazeQuestOTO in the
+           browser, require in Node). Without it, fall back to a maze
+           so old callers never break. */
+        if (opts.oto && opts.oto.buildOtoPage) {
+          pages.push(opts.oto.buildOtoPage(t, diffKey, rng, p + 1));
+        } else {
+          var maze2 = genMaze(diff.maze, diff.maze, rng);
+          pages.push({ type: 'maze', num: p + 1, maze: maze2, solution: solveMaze(maze2), difficulty: diff.label });
+        }
+      } else {
+        var shape = usedShapes[shapeIdx % usedShapes.length]; shapeIdx++;
+        var dot = genDotToDot(shape, diff.dots, rng);
+        pages.push({ type: 'dot', num: p + 1, dot: dot, difficulty: diff.label });
+      }
+    }
+    pages.push({ type: 'answers', num: pageCount + 1, puzzles: pages.slice(1) });
+    return {
+      meta: { title: title, subtitle: subtitle, theme: themeKey || 'library', themeLabel: theme.label, difficulty: diffKey, difficultyLabel: diff.label, pageCount: pageCount, seed: seed, size: opts.size || 'letter', color: theme.color, coverPalette: coverPalette, commercialLicense: !!opts.commercialLicense },
+      pages: pages
+    };
+  }
+
+  function bookFingerprint(book) {
+    var parts = [];
+    book.pages.forEach(function (pg) {
+      if (pg.type === 'maze') parts.push('M' + pg.maze.walls.join(','));
+      else if (pg.type === 'wordsearch') parts.push('W' + pg.ws.grid.map(function (r) { return r.join(''); }).join(''));
+      else if (pg.type === 'dot') parts.push('D' + pg.dot.name + pg.dot.points.map(function (p) { return p.join(':'); }).join(','));
+      else if (pg.type === 'nonogram') parts.push('N' + pg.rowClues.map(function (c) { return c.join('-'); }).join(',') + '/' + pg.colClues.map(function (c) { return c.join('-'); }).join(','));
+      else if (pg.type === 'sudoku') parts.push('S' + pg.grid.map(function (r) { return r.join(''); }).join(''));
+      else if (pg.type === 'spotdiff') parts.push('F' + pg.differences.map(function (d) { return d.kind + d.ax + ':' + d.ay; }).join(','));
+      else if (pg.type === 'colorbynumber') parts.push('C' + pg.name + pg.cells.map(function (r) { return r.join(''); }).join(''));
+      else if (pg.type === 'logic') parts.push('L' + pg.clues.map(function (c) { return c.text; }).join('|'));
+      else parts.push(pg.type + (pg.title || ''));
+    });
+    return parts.join('|');
+  }
+
+  return {
+    THEMES: THEMES, COVER_PALETTES: COVER_PALETTES, DIFFICULTY: DIFFICULTY, OTO_TYPES: OTO_TYPES,
+    mulberry32: mulberry32,
+    genMaze: genMaze, solveMaze: solveMaze,
+    genWordSearch: genWordSearch, findWordInGrid: findWordInGrid,
+    genDotToDot: genDotToDot, resampleShape: resampleShape,
+    buildBook: buildBook, bookFingerprint: bookFingerprint
+  };
+});
+
+</script>
+<script>
+/* MazeQuest Studio — OTO features (OTO1 / OTO2 / OTO3).
+   Pure algorithms, no API, no network. Works in the browser
+   (window.MazeQuestOTO) and in Node (module.exports).
+   OTO1: 5 extra puzzle types + 500-theme library.
+   OTO2: unlimited books (enforced in unlock.js) + commercial license flag.
+   OTO3: seasonal theme packs (themes live in mazequest-core.js) +
+         monthly new templates (MONTHLY_TEMPLATES below).
+   All output is US English. */
+(function (root, factory) {
+  var lib = factory();
+  if (typeof module !== 'undefined' && module.exports) module.exports = lib;
+  root.MazeQuestOTO = lib;
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  /* ---------------- small helpers (same style as core) ---------------- */
+  function mulberry32(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function randInt(rng, min, max) { return min + Math.floor(rng() * (max - min + 1)); }
+  function shuffle(arr, rng) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(rng() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function titleCase(w) { return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); }
+
+  var OTO_TYPES = ['nonogram', 'sudoku', 'spotdiff', 'colorbynumber', 'logic'];
+
+  /* ---------------- OTO1: 500-theme library ---------------- */
+  /* 26 categories x 20 words = 520 topics. Every word is one topic:
+     topic label = the word, topic word list = the word + the next 5 words
+     in its category, so every topic has 6 words for word search and a
+     name for mazes. All words are 8 letters or fewer, so they fit the
+     Easy 8x8 word search grid. Count them with countLibraryTopics(). */
+  var LIBRARY_CATEGORIES = [
+    { id: 'ocean', label: 'Ocean', color: '#0277BD', words: ['WHALE', 'SHARK', 'DOLPHIN', 'OCTOPUS', 'TURTLE', 'SEAL', 'CRAB', 'CORAL', 'PEARL', 'SHELL', 'WAVE', 'TIDE', 'SAND', 'BEACH', 'FISH', 'SQUID', 'EEL', 'RAY', 'CLAM', 'STARFISH'] },
+    { id: 'farm', label: 'Farm', color: '#6D4C41', words: ['COW', 'PIG', 'HORSE', 'SHEEP', 'GOAT', 'HEN', 'DUCK', 'BARN', 'HAY', 'MILK', 'EGGS', 'WOOL', 'TRACTOR', 'FARMER', 'FIELD', 'CORN', 'WHEAT', 'APPLE', 'CARROT', 'PUMPKIN'] },
+    { id: 'jungle', label: 'Jungle', color: '#33691E', words: ['LION', 'TIGER', 'MONKEY', 'PARROT', 'JAGUAR', 'PYTHON', 'VINES', 'CANOPY', 'BANANA', 'COCONUT', 'LEOPARD', 'GORILLA', 'TOUCAN', 'MACAW', 'SLOTH', 'ANTS', 'RIVER', 'RAIN', 'MANGO', 'PAPAYA'] },
+    { id: 'desert', label: 'Desert', color: '#BF360C', words: ['CAMEL', 'CACTUS', 'SAND', 'DUNE', 'OASIS', 'SNAKE', 'LIZARD', 'SCORPION', 'SUNSET', 'ROCKS', 'MIRAGE', 'DRY', 'HOT', 'SANDY', 'COYOTE', 'FOX', 'OWL', 'MOON', 'STAR', 'NIGHT'] },
+    { id: 'arctic', label: 'Arctic', color: '#01579B', words: ['POLAR', 'ICE', 'SNOW', 'SEAL', 'WALRUS', 'PENGUIN', 'AURORA', 'IGLOO', 'FROST', 'BLIZZARD', 'MITTENS', 'SCARF', 'SKI', 'SLED', 'GLOVES', 'COCOA', 'FIRE', 'WINTER', 'NORTH', 'WHITE'] },
+    { id: 'forest', label: 'Forest', color: '#1B5E20', words: ['BEAR', 'WOLF', 'DEER', 'FOX', 'OWL', 'MOOSE', 'ACORN', 'PINE', 'OAK', 'MAPLE', 'MOSS', 'FERN', 'TRAIL', 'CABIN', 'STREAM', 'MUSHROOM', 'BERRY', 'NEST', 'HAWK', 'BADGER'] },
+    { id: 'garden', label: 'Garden', color: '#558B2F', words: ['FLOWER', 'ROSE', 'TULIP', 'DAISY', 'SEEDS', 'SOIL', 'WATER', 'SUN', 'BEE', 'WORM', 'SNAIL', 'LADYBUG', 'CARROT', 'LETTUCE', 'TOMATO', 'POTATO', 'ONION', 'GARLIC', 'HERBS', 'SHOVEL'] },
+    { id: 'kitchen', label: 'Kitchen', color: '#E65100', words: ['BREAD', 'BUTTER', 'CHEESE', 'SPOON', 'FORK', 'PLATE', 'BOWL', 'CUP', 'OVEN', 'STOVE', 'APRON', 'RECIPE', 'COOKIE', 'CAKE', 'SOUP', 'SALAD', 'JUICE', 'MILK', 'SUGAR', 'HONEY'] },
+    { id: 'school', label: 'School', color: '#4527A0', words: ['PENCIL', 'CRAYON', 'BOOK', 'DESK', 'CHAIR', 'TEACHER', 'FRIEND', 'RECESS', 'LUNCH', 'MATH', 'READING', 'SCIENCE', 'ART', 'MUSIC', 'GLUE', 'RULER', 'ERASER', 'BACKPACK', 'SCHOOL', 'CLASS'] },
+    { id: 'sports', label: 'Sports', color: '#00695C', words: ['SOCCER', 'TENNIS', 'BASEBALL', 'BASKET', 'GOAL', 'TEAM', 'COACH', 'SCORE', 'WINNER', 'MEDAL', 'RUNNER', 'JUMP', 'SWIM', 'SKATE', 'HOCKEY', 'GOLF', 'BOXING', 'KARATE', 'YOGA', 'DANCE'] },
+    { id: 'music', label: 'Music', color: '#4A148C', words: ['PIANO', 'GUITAR', 'DRUM', 'VIOLIN', 'TRUMPET', 'FLUTE', 'HARP', 'SONG', 'SING', 'DANCE', 'RHYTHM', 'MELODY', 'BANJO', 'CELLO', 'CLARINET', 'TUBA', 'BONGOS', 'MARACA', 'CHOIR', 'STAGE'] },
+    { id: 'vehicles', label: 'Vehicles', color: '#37474F', words: ['CAR', 'BUS', 'TRAIN', 'PLANE', 'BOAT', 'TRUCK', 'BIKE', 'SHIP', 'ROCKET', 'CHOPPER', 'TAXI', 'VAN', 'JEEP', 'SCOOTER', 'SUBWAY', 'TRACTOR', 'CRANE', 'RESCUE', 'SAIL', 'WHEEL'] },
+    { id: 'fruit', label: 'Fruit', color: '#C62828', words: ['APPLE', 'BANANA', 'ORANGE', 'GRAPE', 'MELON', 'PEACH', 'PEAR', 'PLUM', 'KIWI', 'MANGO', 'LEMON', 'CHERRY', 'BERRY', 'FIG', 'DATE', 'LIME', 'PAPAYA', 'COCONUT', 'APRICOT', 'GUAVA'] },
+    { id: 'vegetables', label: 'Vegetables', color: '#33691E', words: ['CARROT', 'POTATO', 'ONION', 'PEPPER', 'CABBAGE', 'LETTUCE', 'CELERY', 'SPINACH', 'BROCCOLI', 'SQUASH', 'BEANS', 'PEAS', 'CORN', 'GARLIC', 'GINGER', 'RADISH', 'TURNIP', 'YAM', 'KALE', 'ZUCCHINI'] },
+    { id: 'weather', label: 'Weather', color: '#0277BD', words: ['SUNNY', 'RAINY', 'CLOUDY', 'SNOWY', 'WINDY', 'STORM', 'THUNDER', 'FLASH', 'RAINBOW', 'FOGGY', 'HAIL', 'SLEET', 'BREEZE', 'HUMID', 'FREEZE', 'MELT', 'PUDDLE', 'UMBRELLA', 'COAT', 'BOOTS'] },
+    { id: 'body', label: 'My Body', color: '#AD1457', words: ['HEAD', 'EYES', 'NOSE', 'MOUTH', 'TEETH', 'EARS', 'HAIR', 'HANDS', 'FEET', 'TOES', 'FINGERS', 'ELBOW', 'KNEES', 'HEART', 'BRAIN', 'BONES', 'MUSCLE', 'SKIN', 'SMILE', 'HUG'] },
+    { id: 'clothing', label: 'Clothing', color: '#6A1B9A', words: ['SHIRT', 'PANTS', 'DRESS', 'SHOES', 'SOCKS', 'HAT', 'COAT', 'SCARF', 'GLOVES', 'BOOTS', 'JACKET', 'SWEATER', 'SHORTS', 'SKIRT', 'PAJAMAS', 'SLIPPERS', 'BELT', 'CAP', 'MITTENS', 'RAINCOAT'] },
+    { id: 'home', label: 'At Home', color: '#5D4037', words: ['HOUSE', 'ROOM', 'KITCHEN', 'BEDROOM', 'BATHROOM', 'GARDEN', 'DOOR', 'WINDOW', 'TABLE', 'CHAIR', 'LAMP', 'SOFA', 'BED', 'SHELF', 'CLOCK', 'CARPET', 'CURTAIN', 'STAIRS', 'ROOF', 'YARD'] },
+    { id: 'jobs', label: 'Jobs', color: '#004D40', words: ['DOCTOR', 'TEACHER', 'FARMER', 'BAKER', 'PILOT', 'DRIVER', 'CHEF', 'NURSE', 'ARTIST', 'SINGER', 'WRITER', 'BUILDER', 'PLUMBER', 'DENTIST', 'LAWYER', 'POLICE', 'RESCUE', 'SAILOR', 'SOLDIER', 'ACTOR'] },
+    { id: 'bugs', label: 'Bugs', color: '#827717', words: ['ANT', 'BEE', 'FLY', 'SPIDER', 'LADYBUG', 'BEETLE', 'MOTH', 'WASP', 'CRICKET', 'HOPPER', 'FIREFLY', 'DRAGON', 'WORM', 'SNAIL', 'SLUG', 'APHID', 'FLEA', 'TICK', 'MITE', 'ROACH'] },
+    { id: 'birds', label: 'Birds', color: '#01579B', words: ['EAGLE', 'SPARROW', 'ROBIN', 'OWL', 'PENGUIN', 'DUCK', 'GOOSE', 'SWAN', 'CROW', 'HAWK', 'FALCON', 'HERON', 'FLAMINGO', 'PELICAN', 'PARROT', 'TOUCAN', 'CANARY', 'FINCH', 'BLUEJAY', 'CARDINAL'] },
+    { id: 'pets', label: 'Pets', color: '#BF360C', words: ['DOG', 'CAT', 'FISH', 'BIRD', 'HAMSTER', 'RABBIT', 'TURTLE', 'PIGGY', 'MOUSE', 'FERRET', 'GERBIL', 'SNAKE', 'LIZARD', 'FROG', 'PUPPY', 'KITTEN', 'BUNNY', 'PONY', 'GOAT', 'DUCKLING'] },
+    { id: 'fairytale', label: 'Fairy Tale', color: '#880E4F', words: ['CASTLE', 'DRAGON', 'KNIGHT', 'PRINCESS', 'PRINCE', 'WIZARD', 'WITCH', 'FAIRY', 'UNICORN', 'MAGIC', 'SWORD', 'SHIELD', 'CROWN', 'TOWER', 'BRIDGE', 'FOREST', 'SPELL', 'POTION', 'MIRROR', 'TREASURE'] },
+    { id: 'space2', label: 'Space', color: '#1A237E', words: ['SPACEMAN', 'STARSHIP', 'ORBITER', 'METEOR', 'COMET', 'NEBULA', 'GALAXY', 'PLANET', 'MOON', 'MARS', 'VENUS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO', 'ECLIPSE', 'ROCKET', 'LAUNCH', 'GRAVITY'] },
+    { id: 'dinos2', label: 'Dinosaurs', color: '#2E7D32', words: ['TREX', 'TRICERA', 'STEGO', 'BRONTO', 'RAPTOR', 'PTERO', 'ANKYLO', 'DIPLO', 'SPINO', 'FOSSIL', 'BONES', 'EGGS', 'NEST', 'CLAWS', 'TEETH', 'TAIL', 'HORNS', 'SCALES', 'VOLCANO', 'METEOR'] },
+    { id: 'holidays', label: 'Holidays', color: '#B71C1C', words: ['EASTER', 'BUNNY', 'BASKET', 'EGGS', 'PARADE', 'SPARKLE', 'COSTUME', 'PUMPKIN', 'CANDY', 'SANTA', 'REINDEER', 'SLEIGH', 'SNOWMAN', 'GIFT', 'WREATH', 'BELLS', 'CAROL', 'TURKEY', 'FEAST', 'LANTERN'] }
+  ];
+
+  /* Generic dot-to-dot shapes used when a library topic has no theme of
+     its own (library topics reuse these three shapes). */
+  var GENERIC_SHAPES = [
+    { name: 'Star', points: [[50, 8], [58, 32], [82, 32], [63, 48], [70, 72], [50, 58], [30, 72], [37, 48], [18, 32], [42, 32]] },
+    { name: 'Heart', points: [[50, 88], [30, 70], [18, 52], [20, 34], [34, 22], [50, 34], [66, 22], [80, 34], [82, 52], [70, 70]] },
+    { name: 'Flower', points: [[50, 10], [60, 20], [75, 15], [70, 35], [85, 45], [70, 50], [75, 70], [55, 60], [50, 80], [45, 60], [25, 70], [30, 50], [15, 45], [30, 35], [25, 15], [40, 20]] }
+  ];
+
+  function buildLibrary() {
+    var topics = [];
+    LIBRARY_CATEGORIES.forEach(function (cat) {
+      cat.words.forEach(function (w, i) {
+        var words = [w];
+        for (var k = 1; k <= 5; k++) words.push(cat.words[(i + k) % cat.words.length]);
+        topics.push({
+          id: cat.id + '-' + w.toLowerCase(),
+          label: titleCase(w),
+          category: cat.id, categoryLabel: cat.label, color: cat.color,
+          words: words
+        });
+      });
+    });
+    return topics;
+  }
+  var THEME_LIBRARY = buildLibrary();
+
+  function countLibraryTopics() { return THEME_LIBRARY.length; }
+
+  function themeFromLibrary(id) {
+    for (var i = 0; i < THEME_LIBRARY.length; i++) {
+      if (THEME_LIBRARY[i].id === id) {
+        var t = THEME_LIBRARY[i];
+        return { label: t.label, color: t.color, words: t.words, shapes: GENERIC_SHAPES };
+      }
+    }
+    return null;
+  }
+
+  /* ---------------- OTO3: monthly new templates ---------------- */
+  /* One template per month for 12 months, matching the OTO3 promise.
+     To add a future template, append one more entry with the next
+     month key (YYYY-MM). getMonthlyTemplate picks the entry for the
+     given month, or the latest entry before it. */
+  var MONTHLY_TEMPLATES = [
+    { month: '2026-11', title: 'Thanksgiving Maze Fun', blurb: 'Turkey-day mazes, fall word searches and a dot-to-dot pumpkin.', theme: 'animals', types: ['maze', 'wordsearch', 'dot'], difficulty: 'medium', pageCount: 12 },
+    { month: '2026-12', title: 'Christmas Countdown Book', blurb: 'Snowman mazes, Santa word searches and holiday spot-the-difference.', theme: 'winter', types: ['maze', 'wordsearch', 'spotdiff'], difficulty: 'medium', pageCount: 12 },
+    { month: '2027-01', title: 'Winter Logic Challenge', blurb: 'Snowy sudoku, nonograms and logic puzzles for cold afternoons.', theme: 'winter', types: ['sudoku', 'nonogram', 'logic'], difficulty: 'medium', pageCount: 10 },
+    { month: '2027-02', title: 'Valentine Puzzle Pack', blurb: 'Heart color-by-number, love-bug mazes and sweet word searches.', theme: 'animals', types: ['colorbynumber', 'maze', 'wordsearch'], difficulty: 'easy', pageCount: 10 },
+    { month: '2027-03', title: 'Spring Bunny Hunt', blurb: 'Easter egg mazes, spring spot-the-difference and bunny dot-to-dot.', theme: 'spring', types: ['maze', 'spotdiff', 'dot'], difficulty: 'easy', pageCount: 12 },
+    { month: '2027-04', title: 'Rainy Day Logic', blurb: 'Umbrella nonograms, rainy word searches and kids sudoku.', theme: 'space', types: ['nonogram', 'wordsearch', 'sudoku'], difficulty: 'medium', pageCount: 12 },
+    { month: '2027-05', title: 'Garden Explorer Book', blurb: 'Flower color-by-number, garden mazes and bug spot-the-difference.', theme: 'spring', types: ['colorbynumber', 'maze', 'spotdiff'], difficulty: 'easy', pageCount: 12 },
+    { month: '2027-06', title: 'Summer Adventure Pack', blurb: 'Beach mazes, ocean word searches and summer logic puzzles.', theme: 'summer', types: ['maze', 'wordsearch', 'logic'], difficulty: 'medium', pageCount: 12 },
+    { month: '2027-07', title: 'Space Cadet Puzzles', blurb: 'Rocket sudoku, planet nonograms and alien spot-the-difference.', theme: 'space', types: ['sudoku', 'nonogram', 'spotdiff'], difficulty: 'hard', pageCount: 12 },
+    { month: '2027-08', title: 'Back to School Fun', blurb: 'School word searches, pencil mazes and classroom logic grids.', theme: 'animals', types: ['wordsearch', 'maze', 'logic'], difficulty: 'medium', pageCount: 10 },
+    { month: '2027-09', title: 'Dino Discovery Book', blurb: 'Fossil mazes, dinosaur sudoku and dino dot-to-dot.', theme: 'dinosaur', types: ['maze', 'sudoku', 'dot'], difficulty: 'medium', pageCount: 12 },
+    { month: '2027-10', title: 'Halloween Spooky Pack', blurb: 'Pumpkin nonograms, ghost mazes and haunted spot-the-difference.', theme: 'halloween', types: ['nonogram', 'maze', 'spotdiff'], difficulty: 'medium', pageCount: 12 }
+  ];
+
+  function getMonthlyTemplate(date) {
+    var d = date || new Date();
+    var key = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
+    var best = null;
+    for (var i = 0; i < MONTHLY_TEMPLATES.length; i++) {
+      if (MONTHLY_TEMPLATES[i].month <= key) best = MONTHLY_TEMPLATES[i];
+      else break;
+    }
+    return best || MONTHLY_TEMPLATES[0];
+  }
+
+  /* ---------------- OTO1: nonogram ---------------- */
+  /* A nonogram has exactly one solution. Generation: random picture,
+     compute clues, then prove uniqueness with the solver below
+     (line propagation + branching, counting up to 2 solutions).
+     If the picture is not unique, draw another one. */
+  function cluesFromLine(cells) {
+    var clues = [], run = 0;
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i]) run++;
+      else if (run) { clues.push(run); run = 0; }
+    }
+    if (run) clues.push(run);
+    return clues.length ? clues : [0];
+  }
+  function cluesFromGrid(grid) {
+    var rows = grid.length, cols = grid[0].length;
+    var rowClues = [], colClues = [];
+    for (var y = 0; y < rows; y++) rowClues.push(cluesFromLine(grid[y]));
+    for (var x = 0; x < cols; x++) {
+      var col = [];
+      for (var yy = 0; yy < rows; yy++) col.push(grid[yy][x]);
+      colClues.push(cluesFromLine(col));
+    }
+    return { rowClues: rowClues, colClues: colClues };
+  }
+
+  /* All placements of the clues on one line that agree with the known
+     cells (-1 unknown, 0 empty, 1 filled). Returns the list of lines. */
+  function linePlacements(clues, known) {
+    var n = known.length;
+    var out = [];
+    if (clues.length === 1 && clues[0] === 0) {
+      var empty = true;
+      for (var i = 0; i < n; i++) if (known[i] === 1) empty = false;
+      if (empty) { var line = []; for (var j = 0; j < n; j++) line.push(0); out.push(line); }
+      return out;
+    }
+    var cur = new Array(n).fill(0);
+    function place(ci, pos) {
+      if (ci === clues.length) {
+        for (var i = 0; i < n; i++) if (known[i] === 1 && cur[i] !== 1) return;
+        out.push(cur.slice());
+        return;
+      }
+      var run = clues[ci];
+      var rest = 0;
+      for (var k = ci + 1; k < clues.length; k++) rest += clues[k] + 1;
+      for (var start = pos; start + run + rest <= n; start++) {
+        var ok = true;
+        for (var p = pos; p < start; p++) if (known[p] === 1) { ok = false; break; }
+        if (!ok) break;
+        for (var q = 0; q < run; q++) if (known[start + q] === 0) { ok = false; break; }
+        if (!ok) continue;
+        var saved = cur.slice();
+        for (var r = 0; r < run; r++) cur[start + r] = 1;
+        place(ci + 1, start + run + 1);
+        cur = saved;
+      }
+    }
+    place(0, 0);
+    return out;
+  }
+
+  function solveNonogramCount(rowClues, colClues, limit) {
+    var rows = rowClues.length, cols = colClues.length;
+    var grid = [];
+    for (var y = 0; y < rows; y++) { var r = []; for (var x = 0; x < cols; x++) r.push(-1); grid.push(r); }
+    var budget = { left: 3000 };
+    function propagate(g) {
+      var changed = true;
+      while (changed) {
+        changed = false;
+        for (var y = 0; y < rows; y++) {
+          var line = g[y].slice();
+          var opts = linePlacements(rowClues[y], line);
+          if (!opts.length) return false;
+          for (var x = 0; x < cols; x++) {
+            var v = opts[0][x], same = true;
+            for (var o = 1; o < opts.length; o++) if (opts[o][x] !== v) { same = false; break; }
+            if (same && g[y][x] === -1) { g[y][x] = v; changed = true; }
+          }
+        }
+        for (var x2 = 0; x2 < cols; x2++) {
+          var col = [];
+          for (var y2 = 0; y2 < rows; y2++) col.push(g[y2][x2]);
+          var opts2 = linePlacements(colClues[x2], col);
+          if (!opts2.length) return false;
+          for (var y3 = 0; y3 < rows; y3++) {
+            var v2 = opts2[0][y3], same2 = true;
+            for (var o2 = 1; o2 < opts2.length; o2++) if (opts2[o2][y3] !== v2) { same2 = false; break; }
+            if (same2 && g[y3][x2] === -1) { g[y3][x2] = v2; changed = true; }
+          }
+        }
+      }
+      return true;
+    }
+    function copyGrid(g) { return g.map(function (r) { return r.slice(); }); }
+    function count(g) {
+      if (budget.left <= 0) return limit; // give up: treat as not proven unique
+      budget.left--;
+      if (!propagate(g)) return 0;
+      var ux = -1, uy = -1;
+      outer: for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
+        if (g[y][x] === -1) { ux = x; uy = y; break outer; }
+      }
+      if (ux === -1) return 1; // solved
+      var total = 0;
+      for (var v = 1; v >= 0; v--) {
+        var g2 = copyGrid(g);
+        g2[uy][ux] = v;
+        total += count(g2);
+        if (total >= limit) return total;
+      }
+      return total;
+    }
+    return count(grid);
+  }
+
+  /* Structured pictures (blobs grown by random walk + a little scatter)
+     are far more likely to have a unique solution than pure noise, so
+     generation stays fast even at 15x15. */
+  function genNonogramPicture(size, rng) {
+    var grid = [];
+    for (var y = 0; y < size; y++) { var r = []; for (var x = 0; x < size; x++) r.push(0); grid.push(r); }
+    var blobs = 2 + Math.floor(rng() * 2);
+    for (var b = 0; b < blobs; b++) {
+      var cx = Math.floor(rng() * size), cy = Math.floor(rng() * size);
+      var steps = Math.floor(size * size * 0.16);
+      for (var s = 0; s < steps; s++) {
+        grid[cy][cx] = 1;
+        var dir = Math.floor(rng() * 4);
+        if (dir === 0 && cy > 0) cy--;
+        else if (dir === 1 && cy < size - 1) cy++;
+        else if (dir === 2 && cx > 0) cx--;
+        else if (dir === 3 && cx < size - 1) cx++;
+        if (rng() < 0.3) grid[cy][cx] = 1;
+      }
+    }
+    for (var y2 = 0; y2 < size; y2++) for (var x2 = 0; x2 < size; x2++) {
+      if (rng() < 0.06) grid[y2][x2] = 1;
+    }
+    return grid;
+  }
+
+  function genNonogram(size, rng) {
+    for (var attempt = 0; attempt < 60; attempt++) {
+      var grid = genNonogramPicture(size, rng);
+      var clues = cluesFromGrid(grid);
+      if (solveNonogramCount(clues.rowClues, clues.colClues, 2) === 1) {
+        return { type: 'nonogram', rows: size, cols: size, rowClues: clues.rowClues, colClues: clues.colClues, solution: grid, unique: true };
+      }
+    }
+    return null; // caller retries with another seed
+  }
+
+  /* ---------------- OTO1: kids sudoku ---------------- */
+  /* 4x4 (2x2 boxes) and 6x6 (2x3 boxes). Full grid first, then remove
+     cells one at a time, keeping the puzzle only if the solution
+     stays unique. */
+  function sudokuBox(size) { return size === 4 ? { w: 2, h: 2 } : { w: 3, h: 2 }; }
+
+  function solveSudokuCount(grid, size, limit) {
+    var box = sudokuBox(size);
+    function valid(g, y, x, v) {
+      for (var i = 0; i < size; i++) {
+        if (g[y][i] === v || g[i][x] === v) return false;
+      }
+      var by = Math.floor(y / box.h) * box.h, bx = Math.floor(x / box.w) * box.w;
+      for (var dy = 0; dy < box.h; dy++) for (var dx = 0; dx < box.w; dx++) {
+        if (g[by + dy][bx + dx] === v) return false;
+      }
+      return true;
+    }
+    function copy(g) { return g.map(function (r) { return r.slice(); }); }
+    var budget = { left: 5000 };
+    function count(g) {
+      if (budget.left <= 0) return limit;
+      budget.left--;
+      var ey = -1, ex = -1;
+      outer: for (var y = 0; y < size; y++) for (var x = 0; x < size; x++) {
+        if (g[y][x] === 0) { ey = y; ex = x; break outer; }
+      }
+      if (ey === -1) return 1;
+      var total = 0;
+      for (var v = 1; v <= size; v++) {
+        if (!valid(g, ey, ex, v)) continue;
+        var g2 = copy(g);
+        g2[ey][ex] = v;
+        total += count(g2);
+        if (total >= limit) return total;
+      }
+      return total;
+    }
+    return count(copy(grid));
+  }
+
+  function fillSudokuGrid(size, rng) {
+    var grid = [];
+    for (var y = 0; y < size; y++) { var r = []; for (var x = 0; x < size; x++) r.push(0); grid.push(r); }
+    var box = sudokuBox(size);
+    function valid(g, y, x, v) {
+      for (var i = 0; i < size; i++) if (g[y][i] === v || g[i][x] === v) return false;
+      var by = Math.floor(y / box.h) * box.h, bx = Math.floor(x / box.w) * box.w;
+      for (var dy = 0; dy < box.h; dy++) for (var dx = 0; dx < box.w; dx++) if (g[by + dy][bx + dx] === v) return false;
+      return true;
+    }
+    function fill(pos) {
+      if (pos === size * size) return true;
+      var y = Math.floor(pos / size), x = pos % size;
+      var vals = shuffle([1, 2, 3, 4, 5, 6].slice(0, size), rng);
+      for (var i = 0; i < vals.length; i++) {
+        if (valid(grid, y, x, vals[i])) {
+          grid[y][x] = vals[i];
+          if (fill(pos + 1)) return true;
+          grid[y][x] = 0;
+        }
+      }
+      return false;
+    }
+    fill(0);
+    return grid;
+  }
+
+  function genSudoku(size, holes, rng) {
+    var solution = fillSudokuGrid(size, rng);
+    var grid = solution.map(function (r) { return r.slice(); });
+    var cells = [];
+    for (var y = 0; y < size; y++) for (var x = 0; x < size; x++) cells.push([y, x]);
+    cells = shuffle(cells, rng);
+    var removed = 0;
+    for (var i = 0; i < cells.length && removed < holes; i++) {
+      var c = cells[i];
+      var saved = grid[c[0]][c[1]];
+      grid[c[0]][c[1]] = 0;
+      if (solveSudokuCount(grid, size, 2) === 1) removed++;
+      else grid[c[0]][c[1]] = saved;
+    }
+    return { type: 'sudoku', size: size, boxW: sudokuBox(size).w, boxH: sudokuBox(size).h, grid: grid, solution: solution, givens: size * size - removed, unique: true };
+  }
+
+  /* ---------------- OTO1: spot the difference ---------------- */
+  var SPOT_SHAPES = ['circle', 'square', 'triangle', 'diamond'];
+  var SPOT_COLORS = [
+    { name: 'red', rgb: [0.85, 0.15, 0.15] },
+    { name: 'blue', rgb: [0.10, 0.35, 0.85] },
+    { name: 'green', rgb: [0.15, 0.55, 0.20] },
+    { name: 'orange', rgb: [0.95, 0.45, 0.05] },
+    { name: 'purple', rgb: [0.45, 0.15, 0.65] }
+  ];
+  /* 12 fixed slots (4 cols x 3 rows) in a 0-100 box. */
+  var SPOT_SLOTS = [];
+  (function () {
+    var xs = [15, 38, 62, 85], ys = [20, 50, 80];
+    for (var y = 0; y < 3; y++) for (var x = 0; x < 4; x++) SPOT_SLOTS.push({ x: xs[x], y: ys[y] });
+  })();
+
+  function genSpotDiff(diffCount, rng) {
+    var slots = shuffle(SPOT_SLOTS, rng);
+    var itemCount = 11;
+    var itemsA = [];
+    for (var i = 0; i < itemCount; i++) {
+      itemsA.push({
+        x: slots[i].x, y: slots[i].y,
+        shape: SPOT_SHAPES[Math.floor(rng() * SPOT_SHAPES.length)],
+        color: Math.floor(rng() * SPOT_COLORS.length),
+        size: randInt(rng, 8, 12)
+      });
+    }
+    var itemsB = itemsA.map(function (it) { return { x: it.x, y: it.y, shape: it.shape, color: it.color, size: it.size }; });
+    var diffIdx = shuffle(itemsA.map(function (_, i) { return i; }), rng).slice(0, diffCount);
+    var differences = [];
+    var freeSlots = slots.slice(itemCount);
+    diffIdx.forEach(function (idx) {
+      var kind = ['remove', 'color', 'shape', 'move', 'size'][Math.floor(rng() * 5)];
+      var a = itemsA[idx], b = itemsB[idx];
+      if (kind === 'remove') {
+        b.removed = true;
+        differences.push({ kind: 'remove', ax: a.x, ay: a.y, bx: a.x, by: a.y, text: 'Missing shape' });
+      } else if (kind === 'color') {
+        b.color = (b.color + 1 + Math.floor(rng() * (SPOT_COLORS.length - 1))) % SPOT_COLORS.length;
+        differences.push({ kind: 'color', ax: a.x, ay: a.y, bx: a.x, by: a.y, text: 'Different color' });
+      } else if (kind === 'shape') {
+        var other = SPOT_SHAPES.filter(function (s) { return s !== b.shape; });
+        b.shape = other[Math.floor(rng() * other.length)];
+        differences.push({ kind: 'shape', ax: a.x, ay: a.y, bx: a.x, by: a.y, text: 'Different shape' });
+      } else if (kind === 'move' && freeSlots.length) {
+        var slot = freeSlots.pop();
+        b.x = slot.x; b.y = slot.y;
+        differences.push({ kind: 'move', ax: a.x, ay: a.y, bx: b.x, by: b.y, text: 'Moved shape' });
+      } else {
+        b.size = b.size >= 11 ? 7 : 13;
+        differences.push({ kind: 'size', ax: a.x, ay: a.y, bx: a.x, by: a.y, text: 'Different size' });
+      }
+    });
+    return { type: 'spotdiff', itemsA: itemsA, itemsB: itemsB, differences: differences, diffCount: differences.length };
+  }
+
+  /* ---------------- OTO1: color by number ---------------- */
+  var COLOR_PALETTE = {
+    1: { name: 'Red', rgb: [0.83, 0.20, 0.20] },
+    2: { name: 'Blue', rgb: [0.10, 0.46, 0.82] },
+    3: { name: 'Yellow', rgb: [0.98, 0.75, 0.18] },
+    4: { name: 'Green', rgb: [0.22, 0.56, 0.24] },
+    5: { name: 'Orange', rgb: [0.96, 0.49, 0.00] }
+  };
+  /* Pixel pictures: '.' = blank, digits 1-5 = color numbers. */
+  var COLOR_PICTURES = [
+    { name: 'Sun', rows: [
+      '..2...2..',
+      '...2.2...',
+      '.2.111.2.',
+      '...111...',
+      '2.11111.2',
+      '...111...',
+      '.2.111.2.',
+      '...2.2...',
+      '..2...2..'
+    ] },
+    { name: 'Heart', rows: [
+      '.11..11.',
+      '11111111',
+      '12222221',
+      '12222221',
+      '12222221',
+      '.122221.',
+      '..1221..',
+      '...11...'
+    ] },
+    { name: 'Fish', rows: [
+      '..........',
+      '..1111....',
+      '.111111.2.',
+      '1111111122',
+      '1111111122',
+      '.111111.2.',
+      '..1111....',
+      '....3.....'
+    ] },
+    { name: 'Flower', rows: [
+      '...11.....',
+      '..1111..4.',
+      '..1111.44.',
+      '...11..4..',
+      '....2.....',
+      '....3.....',
+      '....3..44.',
+      '....3.4...',
+      '...333....',
+      '..........'
+    ] },
+    { name: 'Rocket', rows: [
+      '....1...',
+      '...111..',
+      '...121..',
+      '...111..',
+      '...111..',
+      '..31113.',
+      '..31113.',
+      '.3.111.3',
+      '...444..',
+      '....4...'
+    ] },
+    { name: 'House', rows: [
+      '....11....',
+      '...1111...',
+      '..111111..',
+      '.11111111.',
+      '2222222222',
+      '2224222222',
+      '2224222222',
+      '2223332222',
+      '2223332222',
+      '2223332222'
+    ] }
+  ];
+
+  function genColorByNumber(difficulty, rng) {
+    var pool = difficulty === 'easy' ? [0, 1] : difficulty === 'medium' ? [2, 3, 4] : [4, 5, 2, 3];
+    var pic = COLOR_PICTURES[pool[Math.floor(rng() * pool.length)]];
+    var cells = pic.rows.map(function (row) {
+      return row.split('').map(function (ch) { return ch === '.' ? 0 : parseInt(ch, 10); });
+    });
+    var used = {};
+    var numbered = 0;
+    cells.forEach(function (row) { row.forEach(function (v) { if (v) { used[v] = true; numbered++; } }); });
+    var palette = Object.keys(used).map(function (k) { return parseInt(k, 10); }).sort();
+    return { type: 'colorbynumber', name: pic.name, rows: cells.length, cols: cells[0].length, cells: cells, palette: palette, numberedCells: numbered };
+  }
+
+  /* ---------------- OTO1: logic puzzle ---------------- */
+  /* 3 kids x 3 pets x 3 colors. Clues are added until brute force over
+     all 36 assignments leaves exactly one solution. */
+  var LOGIC_KIDS = ['Mia', 'Leo', 'Zoe'];
+  var LOGIC_PETS = ['Cat', 'Dog', 'Bird'];
+  var LOGIC_COLORS = ['Red', 'Blue', 'Green'];
+
+  function logicMatches(clues, petOf, colorOf) {
+    for (var i = 0; i < clues.length; i++) {
+      var c = clues[i];
+      if (c.kind === 'direct-pet' && petOf[c.kid] !== c.pet) return false;
+      if (c.kind === 'direct-color' && colorOf[c.kid] !== c.color) return false;
+      if (c.kind === 'link') {
+        var kid = null;
+        LOGIC_KIDS.forEach(function (k) { if (petOf[k] === c.pet) kid = k; });
+        if (!kid || colorOf[kid] !== c.color) return false;
+      }
+      if (c.kind === 'not-pet' && petOf[c.kid] === c.pet) return false;
+      if (c.kind === 'not-color' && colorOf[c.kid] === c.color) return false;
+    }
+    return true;
+  }
+
+  function solveLogicCount(clues, limit) {
+    var count = 0;
+    var petPerms = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+    var colorPerms = petPerms;
+    for (var p = 0; p < petPerms.length; p++) {
+      for (var c = 0; c < colorPerms.length; c++) {
+        var petOf = {}, colorOf = {};
+        for (var k = 0; k < 3; k++) {
+          petOf[LOGIC_KIDS[k]] = LOGIC_PETS[petPerms[p][k]];
+          colorOf[LOGIC_KIDS[k]] = LOGIC_COLORS[colorPerms[c][k]];
+        }
+        if (logicMatches(clues, petOf, colorOf)) {
+          count++;
+          if (count >= limit) return count;
+        }
+      }
+    }
+    return count;
+  }
+
+  function genLogicPuzzle(difficulty, rng) {
+    var petOrder = shuffle([0, 1, 2], rng);
+    var colorOrder = shuffle([0, 1, 2], rng);
+    var petOf = {}, colorOf = {};
+    for (var k = 0; k < 3; k++) {
+      petOf[LOGIC_KIDS[k]] = LOGIC_PETS[petOrder[k]];
+      colorOf[LOGIC_KIDS[k]] = LOGIC_COLORS[colorOrder[k]];
+    }
+    var pool = [];
+    LOGIC_KIDS.forEach(function (kid) {
+      pool.push({ kind: 'direct-pet', kid: kid, pet: petOf[kid], text: kid + ' has the ' + petOf[kid] + '.' });
+      pool.push({ kind: 'direct-color', kid: kid, color: colorOf[kid], text: kid + ' likes ' + colorOf[kid] + '.' });
+    });
+    LOGIC_PETS.forEach(function (pet) {
+      var kid = null;
+      LOGIC_KIDS.forEach(function (k) { if (petOf[k] === pet) kid = k; });
+      pool.push({ kind: 'link', pet: pet, color: colorOf[kid], text: 'The kid with the ' + pet + ' likes ' + colorOf[kid] + '.' });
+    });
+    LOGIC_KIDS.forEach(function (kid) {
+      LOGIC_PETS.forEach(function (pet) {
+        if (petOf[kid] !== pet) pool.push({ kind: 'not-pet', kid: kid, pet: pet, text: kid + ' does not have the ' + pet + '.' });
+      });
+      LOGIC_COLORS.forEach(function (color) {
+        if (colorOf[kid] !== color) pool.push({ kind: 'not-color', kid: kid, color: color, text: kid + ' does not like ' + color + '.' });
+      });
+    });
+    /* Easy: direct clues first. Hard: negatives may come first. */
+    pool = shuffle(pool, rng);
+    if (difficulty === 'easy') {
+      pool.sort(function (a, b) {
+        var da = a.kind.indexOf('direct') === 0 ? 0 : 1;
+        var db = b.kind.indexOf('direct') === 0 ? 0 : 1;
+        return da - db;
+      });
+    }
+    var maxClues = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 6 : 7;
+    /* Greedy: at each step, add the clue that cuts the number of
+       remaining solutions the most, until exactly one is left. */
+    var clues = [];
+    while (clues.length < maxClues && solveLogicCount(clues, 2) !== 1) {
+      var best = null, bestCount = null;
+      for (var i = 0; i < pool.length; i++) {
+        var used = false;
+        for (var j = 0; j < clues.length; j++) if (clues[j] === pool[i]) { used = true; break; }
+        if (used) continue;
+        var trial = clues.concat([pool[i]]);
+        var c = solveLogicCount(trial, 37);
+        if (bestCount === null || c < bestCount) { best = pool[i]; bestCount = c; if (c === 1) break; }
+      }
+      if (!best) break;
+      clues.push(best);
+    }
+    var solution = {};
+    LOGIC_KIDS.forEach(function (kid) { solution[kid] = { pet: petOf[kid], color: colorOf[kid] }; });
+    return { type: 'logic', kids: LOGIC_KIDS.slice(), pets: LOGIC_PETS.slice(), colors: LOGIC_COLORS.slice(), clues: clues, solution: solution, unique: solveLogicCount(clues, 2) === 1 };
+  }
+
+  /* ---------------- dispatcher: one OTO puzzle page ---------------- */
+  function buildOtoPage(type, difficulty, rng, num) {
+    var page = null;
+    if (type === 'nonogram') {
+      var size = difficulty === 'easy' ? 5 : difficulty === 'hard' ? 15 : 10;
+      for (var a = 0; a < 10; a++) {
+        var ng = genNonogram(size, rng);
+        if (ng) { page = ng; break; }
+      }
+      if (!page) page = { type: 'nonogram', rows: size, cols: size, rowClues: [], colClues: [], solution: [], unique: false };
+    } else if (type === 'sudoku') {
+      if (difficulty === 'easy') page = genSudoku(4, 5, rng);
+      else if (difficulty === 'medium') page = genSudoku(6, 12, rng);
+      else page = genSudoku(6, 17, rng);
+    } else if (type === 'spotdiff') {
+      var diffs = difficulty === 'easy' ? 5 : difficulty === 'hard' ? 7 : 6;
+      page = genSpotDiff(diffs, rng);
+    } else if (type === 'colorbynumber') {
+      page = genColorByNumber(difficulty, rng);
+    } else if (type === 'logic') {
+      page = genLogicPuzzle(difficulty, rng);
+    }
+    if (page) { page.num = num; page.difficulty = difficulty === 'easy' ? 'Easy' : difficulty === 'hard' ? 'Hard' : 'Medium'; }
+    return page;
+  }
+
+  return {
+    OTO_TYPES: OTO_TYPES,
+    LIBRARY_CATEGORIES: LIBRARY_CATEGORIES,
+    THEME_LIBRARY: THEME_LIBRARY,
+    countLibraryTopics: countLibraryTopics,
+    themeFromLibrary: themeFromLibrary,
+    MONTHLY_TEMPLATES: MONTHLY_TEMPLATES,
+    getMonthlyTemplate: getMonthlyTemplate,
+    cluesFromGrid: cluesFromGrid,
+    solveNonogramCount: solveNonogramCount,
+    genNonogram: genNonogram,
+    solveSudokuCount: solveSudokuCount,
+    genSudoku: genSudoku,
+    SPOT_SHAPES: SPOT_SHAPES, SPOT_COLORS: SPOT_COLORS,
+    genSpotDiff: genSpotDiff,
+    COLOR_PALETTE: COLOR_PALETTE, COLOR_PICTURES: COLOR_PICTURES,
+    genColorByNumber: genColorByNumber,
+    LOGIC_KIDS: LOGIC_KIDS, LOGIC_PETS: LOGIC_PETS, LOGIC_COLORS: LOGIC_COLORS,
+    solveLogicCount: solveLogicCount,
+    genLogicPuzzle: genLogicPuzzle,
+    buildOtoPage: buildOtoPage
+  };
+});
+
+</script>
+<script>
+/* MazeQuest Studio — local unlock system (DEMO / TEST ONLY).
+   The front-end app is $17 and allows 20 books per month for personal
+   use. OTO1 ($27), OTO2 ($37) and OTO3 ($47) unlock extra features.
+   Because there is no WarriorPlus webhook yet, unlocking is done here
+   with a local code: the buyer enters a code like MZQ-OTO1-DEMO1 and
+   the matching OTO unlocks, stored in localStorage.
+   TEMPORARY: when the product is listed on WarriorPlus for real, this
+   file must be replaced by the webhook flow (WarriorPlus -> auto-create
+   account -> email with a real unlock code). Do NOT treat these demo
+   codes as secure — anyone who reads UNLOCK-CODES.md can use them.
+   Works in the browser (window.MazeQuestUnlock) and in Node
+   (module.exports, with an in-memory store instead of localStorage). */
+(function (root, factory) {
+  var lib = factory();
+  if (typeof module !== 'undefined' && module.exports) module.exports = lib;
+  root.MazeQuestUnlock = lib;
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  /* Demo codes. Listed in UNLOCK-CODES.md. */
+  var DEMO_CODES = {
+    'MZQ-OTO1-DEMO1': 'oto1',
+    'MZQ-OTO1-START': 'oto1',
+    'MZQ-OTO2-DEMO2': 'oto2',
+    'MZQ-OTO2-START': 'oto2',
+    'MZQ-OTO3-DEMO3': 'oto3',
+    'MZQ-OTO3-START': 'oto3'
+  };
+
+  var FE_MONTHLY_LIMIT = 20; // front-end: 20 books per month (funnel.txt)
+  var STORE_KEY = 'mzq_unlocks_v1';
+  var USAGE_KEY = 'mzq_usage_v1';
+  var COMMERCIAL_KEY = 'mzq_commercial_v1';
+
+  /* ---- storage: localStorage in the browser, memory in Node/tests ---- */
+  var memStore = {};
+  function hasLocalStorage() {
+    try { return typeof localStorage !== 'undefined' && localStorage !== null; } catch (e) { return false; }
+  }
+  function storeGet(key) {
+    if (hasLocalStorage()) { try { return localStorage.getItem(key); } catch (e) { return memStore[key] || null; } }
+    return memStore[key] || null;
+  }
+  function storeSet(key, value) {
+    if (hasLocalStorage()) { try { localStorage.setItem(key, value); return; } catch (e) { /* fall through */ } }
+    memStore[key] = value;
+  }
+
+  function loadUnlocks() {
+    try { var u = JSON.parse(storeGet(STORE_KEY) || '{}'); return { oto1: !!u.oto1, oto2: !!u.oto2, oto3: !!u.oto3 }; }
+    catch (e) { return { oto1: false, oto2: false, oto3: false }; }
+  }
+  function saveUnlocks(u) { storeSet(STORE_KEY, JSON.stringify(u)); }
+
+  function normalizeCode(code) {
+    return String(code || '').toUpperCase().replace(/[\s_]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  /* Unlock one OTO with a code. Returns {ok, oto} or {ok:false, error}. */
+  function unlock(code) {
+    var c = normalizeCode(code);
+    if (!c) return { ok: false, error: 'Enter a code first.' };
+    if (!/^MZQ-OTO[123]-[A-Z0-9]+$/.test(c)) {
+      return { ok: false, error: 'That code does not look right. Codes look like MZQ-OTO1-DEMO1.' };
+    }
+    var oto = DEMO_CODES[c];
+    if (!oto) return { ok: false, error: 'Code not recognized. Check the code and try again.' };
+    var u = loadUnlocks();
+    u[oto] = true;
+    saveUnlocks(u);
+    return { ok: true, oto: oto };
+  }
+
+  function isUnlocked(oto) { return !!loadUnlocks()[oto]; }
+  function getUnlocks() { return loadUnlocks(); }
+  function lockAll() { saveUnlocks({ oto1: false, oto2: false, oto3: false }); }
+
+  /* ---- monthly book counter (FE limit 20/month, OTO2 removes it) ---- */
+  function monthKey(date) {
+    var d = date || new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
+  }
+  function loadUsage() {
+    try { var u = JSON.parse(storeGet(USAGE_KEY) || '{}'); return u; } catch (e) { return {}; }
+  }
+  function booksThisMonth(date) {
+    var u = loadUsage();
+    return u[monthKey(date)] || 0;
+  }
+  function booksLimit() { return isUnlocked('oto2') ? Infinity : FE_MONTHLY_LIMIT; }
+  function canGenerate(date) { return booksThisMonth(date) < booksLimit(); }
+  /* Call after a book is generated. Returns {ok, used, limit}. */
+  function recordBook(date) {
+    var u = loadUsage();
+    var key = monthKey(date);
+    u[key] = (u[key] || 0) + 1;
+    storeSet(USAGE_KEY, JSON.stringify(u));
+    return { ok: true, used: u[key], limit: booksLimit() };
+  }
+  function resetUsage() { storeSet(USAGE_KEY, JSON.stringify({})); }
+
+  /* ---- commercial license choice (OTO2, saved per buyer) ---- */
+  function getCommercial() { return storeGet(COMMERCIAL_KEY) === '1'; }
+  function setCommercial(on) { storeSet(COMMERCIAL_KEY, on ? '1' : '0'); }
+
+  return {
+    DEMO_CODES: DEMO_CODES,
+    FE_MONTHLY_LIMIT: FE_MONTHLY_LIMIT,
+    normalizeCode: normalizeCode,
+    unlock: unlock,
+    isUnlocked: isUnlocked,
+    getUnlocks: getUnlocks,
+    lockAll: lockAll,
+    monthKey: monthKey,
+    booksThisMonth: booksThisMonth,
+    booksLimit: booksLimit,
+    canGenerate: canGenerate,
+    recordBook: recordBook,
+    resetUsage: resetUsage,
+    getCommercial: getCommercial,
+    setCommercial: setCommercial
+  };
+});
+
+</script>
+<script>
+/* MazeQuest Studio — SVG preview renderers (browser only).
+   Mirrors the PDF layout so what you see is what prints. */
+(function (root, factory) {
+  var lib = factory();
+  root.MazeQuestSVG = lib;
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  function svgOpen(w, h) { return '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#fff">'; }
+
+  /* ---- colored cover art: one simple flat illustration per theme.
+     Centered at (cx, cy), size S = width of the art box. ---- */
+  function coverArt(key, cx, cy, S) {
+    var u = S / 100; // unit
+    var a = '';
+    function star(x, y, r, fill) {
+      var pts = [];
+      for (var i = 0; i < 10; i++) {
+        var ang = -Math.PI / 2 + i * Math.PI / 5, rr = (i % 2 === 0) ? r : r * 0.45;
+        pts.push((x + rr * Math.cos(ang)).toFixed(1) + ',' + (y + rr * Math.sin(ang)).toFixed(1));
+      }
+      return '<polygon points="' + pts.join(' ') + '" fill="' + fill + '"/>';
+    }
+    if (key === 'dinosaur') {
+      a += '<ellipse cx="' + (cx - 8 * u) + '" cy="' + (cy + 12 * u) + '" rx="' + 34 * u + '" ry="' + 22 * u + '" fill="#43A047"/>';
+      a += '<circle cx="' + (cx + 26 * u) + '" cy="' + (cy - 8 * u) + '" r="' + 17 * u + '" fill="#43A047"/>';
+      a += '<polygon points="' + (cx + 12 * u) + ',' + (cy - 20 * u) + ' ' + (cx + 20 * u) + ',' + (cy - 32 * u) + ' ' + (cx + 28 * u) + ',' + (cy - 18 * u) + '" fill="#2E7D32"/>';
+      a += '<polygon points="' + (cx - 40 * u) + ',' + (cy + 6 * u) + ' ' + (cx - 52 * u) + ',' + (cy - 12 * u) + ' ' + (cx - 34 * u) + ',' + (cy + 2 * u) + '" fill="#2E7D32"/>';
+      a += '<polygon points="' + (cx - 26 * u) + ',' + (cy - 8 * u) + ' ' + (cx - 18 * u) + ',' + (cy - 20 * u) + ' ' + (cx - 10 * u) + ',' + (cy - 8 * u) + '" fill="#2E7D32"/>';
+      a += '<rect x="' + (cx - 26 * u) + '" y="' + (cy + 28 * u) + '" width="' + 10 * u + '" height="' + 14 * u + '" rx="' + 4 * u + '" fill="#2E7D32"/>';
+      a += '<rect x="' + (cx + 4 * u) + '" y="' + (cy + 28 * u) + '" width="' + 10 * u + '" height="' + 14 * u + '" rx="' + 4 * u + '" fill="#2E7D32"/>';
+      a += '<circle cx="' + (cx + 31 * u) + '" cy="' + (cy - 12 * u) + '" r="' + 4 * u + '" fill="#fff"/><circle cx="' + (cx + 32 * u) + '" cy="' + (cy - 12 * u) + '" r="' + 2 * u + '" fill="#222"/>';
+      a += '<ellipse cx="' + (cx - 8 * u) + '" cy="' + (cy + 20 * u) + '" rx="' + 18 * u + '" ry="' + 9 * u + '" fill="#A5D6A7"/>';
+      a += star(cx - 44 * u, cy - 26 * u, 7 * u, '#FFD54F') + star(cx + 42 * u, cy + 26 * u, 6 * u, '#FFD54F');
+    } else if (key === 'space') {
+      a += '<circle cx="' + (cx - 30 * u) + '" cy="' + (cy + 18 * u) + '" r="' + 20 * u + '" fill="#7C4DFF"/>';
+      a += '<ellipse cx="' + (cx - 30 * u) + '" cy="' + (cy + 18 * u) + '" rx="' + 30 * u + '" ry="' + 8 * u + '" fill="none" stroke="#FFD54F" stroke-width="' + 3 * u + '" transform="rotate(-20 ' + (cx - 30 * u) + ' ' + (cy + 18 * u) + ')"/>';
+      a += '<polygon points="' + (cx + 18 * u) + ',' + (cy - 38 * u) + ' ' + (cx + 30 * u) + ',' + (cy - 8 * u) + ' ' + (cx + 6 * u) + ',' + (cy - 8 * u) + '" fill="#E53935"/>';
+      a += '<rect x="' + (cx + 8 * u) + '" y="' + (cy - 10 * u) + '" width="' + 20 * u + '" height="' + 30 * u + '" rx="' + 6 * u + '" fill="#ECEFF1" stroke="#90A4AE" stroke-width="' + 2 * u + '"/>';
+      a += '<circle cx="' + (cx + 18 * u) + '" cy="' + (cy + 2 * u) + '" r="' + 6 * u + '" fill="#4FC3F7" stroke="#0288D1" stroke-width="' + 2 * u + '"/>';
+      a += '<polygon points="' + (cx + 2 * u) + ',' + (cy + 18 * u) + ' ' + (cx + 12 * u) + ',' + (cy + 32 * u) + ' ' + (cx + 20 * u) + ',' + (cy + 18 * u) + '" fill="#FF9800"/>';
+      a += '<polygon points="' + (cx + 24 * u) + ',' + (cy + 18 * u) + ' ' + (cx + 34 * u) + ',' + (cy + 32 * u) + ' ' + (cx + 42 * u) + ',' + (cy + 18 * u) + '" fill="#FF9800"/>';
+      a += star(cx - 46 * u, cy - 30 * u, 7 * u, '#FFD54F') + star(cx + 44 * u, cy - 22 * u, 5 * u, '#FFF') + star(cx + 38 * u, cy + 30 * u, 5 * u, '#FFD54F');
+    } else if (key === 'animals') {
+      a += '<circle cx="' + cx + '" cy="' + cy + '" r="' + 34 * u + '" fill="#FF8A65"/>';
+      a += '<polygon points="' + (cx - 28 * u) + ',' + (cy - 22 * u) + ' ' + (cx - 34 * u) + ',' + (cy - 44 * u) + ' ' + (cx - 10 * u) + ',' + (cy - 30 * u) + '" fill="#FF8A65"/>';
+      a += '<polygon points="' + (cx + 28 * u) + ',' + (cy - 22 * u) + ' ' + (cx + 34 * u) + ',' + (cy - 44 * u) + ' ' + (cx + 10 * u) + ',' + (cy - 30 * u) + '" fill="#FF8A65"/>';
+      a += '<polygon points="' + (cx - 24 * u) + ',' + (cy - 26 * u) + ' ' + (cx - 28 * u) + ',' + (cy - 38 * u) + ' ' + (cx - 14 * u) + ',' + (cy - 30 * u) + '" fill="#F48FB1"/>';
+      a += '<polygon points="' + (cx + 24 * u) + ',' + (cy - 26 * u) + ' ' + (cx + 28 * u) + ',' + (cy - 38 * u) + ' ' + (cx + 14 * u) + ',' + (cy - 30 * u) + '" fill="#F48FB1"/>';
+      a += '<circle cx="' + (cx - 13 * u) + '" cy="' + (cy - 4 * u) + '" r="' + 4.5 * u + '" fill="#222"/><circle cx="' + (cx + 13 * u) + '" cy="' + (cy - 4 * u) + '" r="' + 4.5 * u + '" fill="#222"/>';
+      a += '<circle cx="' + (cx - 11.5 * u) + '" cy="' + (cy - 5.5 * u) + '" r="' + 1.5 * u + '" fill="#fff"/><circle cx="' + (cx + 14.5 * u) + '" cy="' + (cy - 5.5 * u) + '" r="' + 1.5 * u + '" fill="#fff"/>';
+      a += '<polygon points="' + (cx - 5 * u) + ',' + (cy + 6 * u) + ' ' + (cx + 5 * u) + ',' + (cy + 6 * u) + ' ' + cx + ',' + (cy + 12 * u) + '" fill="#EC407A"/>';
+      a += '<line x1="' + (cx - 34 * u) + '" y1="' + (cy + 8 * u) + '" x2="' + (cx - 12 * u) + '" y2="' + (cy + 10 * u) + '" stroke="#8D6E63" stroke-width="' + 1.5 * u + '"/><line x1="' + (cx + 12 * u) + '" y1="' + (cy + 10 * u) + '" x2="' + (cx + 34 * u) + '" y2="' + (cy + 8 * u) + '" stroke="#8D6E63" stroke-width="' + 1.5 * u + '"/>';
+      a += '<circle cx="' + (cx - 22 * u) + '" cy="' + (cy + 14 * u) + '" r="' + 5 * u + '" fill="#FFAB91"/><circle cx="' + (cx + 22 * u) + '" cy="' + (cy + 14 * u) + '" r="' + 5 * u + '" fill="#FFAB91"/>';
+    } else if (key === 'christmas') {
+      a += '<polygon points="' + cx + ',' + (cy - 42 * u) + ' ' + (cx - 22 * u) + ',' + (cy - 6 * u) + ' ' + (cx + 22 * u) + ',' + (cy - 6 * u) + '" fill="#2E7D32"/>';
+      a += '<polygon points="' + cx + ',' + (cy - 26 * u) + ' ' + (cx - 28 * u) + ',' + (cy + 14 * u) + ' ' + (cx + 28 * u) + ',' + (cy + 14 * u) + '" fill="#388E3C"/>';
+      a += '<polygon points="' + cx + ',' + (cy - 10 * u) + ' ' + (cx - 34 * u) + ',' + (cy + 32 * u) + ' ' + (cx + 34 * u) + ',' + (cy + 32 * u) + '" fill="#43A047"/>';
+      a += '<rect x="' + (cx - 6 * u) + '" y="' + (cy + 32 * u) + '" width="' + 12 * u + '" height="' + 12 * u + '" fill="#8D6E63"/>';
+      a += star(cx, cy - 46 * u, 8 * u, '#FFD54F');
+      a += '<circle cx="' + (cx - 14 * u) + '" cy="' + (cy + 2 * u) + '" r="' + 4 * u + '" fill="#E53935"/><circle cx="' + (cx + 12 * u) + '" cy="' + (cy - 12 * u) + '" r="' + 4 * u + '" fill="#FFCA28"/><circle cx="' + (cx + 16 * u) + '" cy="' + (cy + 20 * u) + '" r="' + 4 * u + '" fill="#1E88E5"/><circle cx="' + (cx - 18 * u) + '" cy="' + (cy + 22 * u) + '" r="' + 4 * u + '" fill="#FFCA28"/>';
+      a += '<circle cx="' + (cx - 44 * u) + '" cy="' + (cy - 30 * u) + '" r="' + 3 * u + '" fill="#fff"/><circle cx="' + (cx + 44 * u) + '" cy="' + (cy - 18 * u) + '" r="' + 3 * u + '" fill="#fff"/><circle cx="' + (cx - 40 * u) + '" cy="' + (cy + 30 * u) + '" r="' + 3 * u + '" fill="#fff"/>';
+    } else if (key === 'spring') {
+      var petals = '';
+      for (var pi = 0; pi < 6; pi++) {
+        var ang = pi * Math.PI / 3;
+        petals += '<circle cx="' + (cx + 20 * u * Math.cos(ang)).toFixed(1) + '" cy="' + (cy + 20 * u * Math.sin(ang)).toFixed(1) + '" r="' + 14 * u + '" fill="#F48FB1"/>';
+      }
+      a += petals + '<circle cx="' + cx + '" cy="' + cy + '" r="' + 13 * u + '" fill="#FFD54F"/>';
+      a += '<rect x="' + (cx - 2 * u) + '" y="' + (cy + 12 * u) + '" width="' + 4 * u + '" height="' + 32 * u + '" fill="#43A047"/>';
+      a += '<ellipse cx="' + (cx - 34 * u) + '" cy="' + (cy - 6 * u) + '" rx="' + 14 * u + '" ry="' + 9 * u + '" fill="#AB47BC" transform="rotate(-30 ' + (cx - 34 * u) + ' ' + (cy - 6 * u) + ')"/>';
+      a += '<ellipse cx="' + (cx - 20 * u) + '" cy="' + (cy - 14 * u) + '" rx="' + 14 * u + '" ry="' + 9 * u + '" fill="#7C4DFF" transform="rotate(30 ' + (cx - 20 * u) + ' ' + (cy - 14 * u) + ')"/>';
+      a += '<ellipse cx="' + (cx + 34 * u) + '" cy="' + (cy + 8 * u) + '" rx="' + 14 * u + '" ry="' + 9 * u + '" fill="#AB47BC" transform="rotate(30 ' + (cx + 34 * u) + ' ' + (cy + 8 * u) + ')"/>';
+      a += '<ellipse cx="' + (cx + 20 * u) + '" cy="' + (cy + 2 * u) + '" rx="' + 14 * u + '" ry="' + 9 * u + '" fill="#7C4DFF" transform="rotate(-30 ' + (cx + 20 * u) + ' ' + (cy + 2 * u) + ')"/>';
+      a += '<circle cx="' + (cx - 27 * u) + '" cy="' + (cy - 10 * u) + '" r="' + 3 * u + '" fill="#333"/><circle cx="' + (cx + 27 * u) + '" cy="' + (cy + 5 * u) + '" r="' + 3 * u + '" fill="#333"/>';
+    } else if (key === 'summer') {
+      a += '<circle cx="' + cx + '" cy="' + cy + '" r="' + 24 * u + '" fill="#FFD54F"/>';
+      for (var ri = 0; ri < 8; ri++) {
+        var ra = ri * Math.PI / 4;
+        a += '<line x1="' + (cx + 30 * u * Math.cos(ra)).toFixed(1) + '" y1="' + (cy + 30 * u * Math.sin(ra)).toFixed(1) + '" x2="' + (cx + 40 * u * Math.cos(ra)).toFixed(1) + '" y2="' + (cy + 40 * u * Math.sin(ra)).toFixed(1) + '" stroke="#FF9800" stroke-width="' + 4 * u + '" stroke-linecap="round"/>';
+      }
+      a += '<path d="M ' + (cx - 46 * u) + ' ' + (cy + 34 * u) + ' Q ' + (cx - 23 * u) + ' ' + (cy + 24 * u) + ' ' + cx + ' ' + (cy + 34 * u) + ' Q ' + (cx + 23 * u) + ' ' + (cy + 44 * u) + ' ' + (cx + 46 * u) + ' ' + (cy + 34 * u) + '" fill="none" stroke="#29B6F6" stroke-width="' + 4 * u + '" stroke-linecap="round"/>';
+      a += '<path d="M ' + (cx - 40 * u) + ' ' + (cy + 46 * u) + ' Q ' + (cx - 20 * u) + ' ' + (cy + 36 * u) + ' ' + cx + ' ' + (cy + 46 * u) + ' Q ' + (cx + 20 * u) + ' ' + (cy + 56 * u) + ' ' + (cx + 40 * u) + ' ' + (cy + 46 * u) + '" fill="none" stroke="#29B6F6" stroke-width="' + 3 * u + '" stroke-linecap="round"/>';
+      a += '<circle cx="' + (cx - 42 * u) + '" cy="' + (cy - 28 * u) + '" r="' + 4 * u + '" fill="#FF8A65"/><circle cx="' + (cx + 44 * u) + '" cy="' + (cy - 20 * u) + '" r="' + 3 * u + '" fill="#FF8A65"/>';
+    } else if (key === 'halloween') {
+      a += '<circle cx="' + (cx - 26 * u) + '" cy="' + (cy - 30 * u) + '" r="' + 14 * u + '" fill="#FFF9C4"/>';
+      a += '<ellipse cx="' + cx + '" cy="' + (cy + 6 * u) + '" rx="' + 34 * u + '" ry="' + 28 * u + '" fill="#FB8C00"/>';
+      a += '<path d="M ' + (cx - 20 * u) + ' ' + (cy - 16 * u) + ' Q ' + cx + ' ' + (cy - 4 * u) + ' ' + (cx + 20 * u) + ' ' + (cy - 16 * u) + '" fill="none" stroke="#E65100" stroke-width="' + 2 * u + '"/>';
+      a += '<path d="M ' + (cx - 26 * u) + ' ' + (cy + 22 * u) + ' Q ' + cx + ' ' + (cy + 34 * u) + ' ' + (cx + 26 * u) + ' ' + (cy + 22 * u) + '" fill="none" stroke="#E65100" stroke-width="' + 2 * u + '"/>';
+      a += '<rect x="' + (cx - 4 * u) + '" y="' + (cy - 30 * u) + '" width="' + 8 * u + '" height="' + 10 * u + '" fill="#6D4C41"/>';
+      a += '<polygon points="' + (cx - 16 * u) + ',' + (cy - 2 * u) + ' ' + (cx - 8 * u) + ',' + (cy + 8 * u) + ' ' + (cx - 22 * u) + ',' + (cy + 8 * u) + '" fill="#333"/>';
+      a += '<polygon points="' + (cx + 16 * u) + ',' + (cy - 2 * u) + ' ' + (cx + 8 * u) + ',' + (cy + 8 * u) + ' ' + (cx + 22 * u) + ',' + (cy + 8 * u) + '" fill="#333"/>';
+      a += '<polygon points="' + (cx - 14 * u) + ',' + (cy + 16 * u) + ' ' + (cx - 7 * u) + ',' + (cy + 10 * u) + ' ' + (cx - 2 * u) + ',' + (cy + 16 * u) + ' ' + (cx + 4 * u) + ',' + (cy + 10 * u) + ' ' + (cx + 10 * u) + ',' + (cy + 16 * u) + ' ' + (cx + 14 * u) + ',' + (cy + 12 * u) + ' ' + (cx + 10 * u) + ',' + (cy + 20 * u) + ' ' + (cx - 10 * u) + ',' + (cy + 20 * u) + ' ' + (cx - 14 * u) + ',' + (cy + 12 * u) + '" fill="#333"/>';
+      a += star(cx + 42 * u, cy - 34 * u, 5 * u, '#FFF59D');
+    } else if (key === 'winter') {
+      a += '<circle cx="' + cx + '" cy="' + (cy - 26 * u) + '" r="' + 14 * u + '" fill="#fff" stroke="#90A4AE" stroke-width="' + 2 * u + '"/>';
+      a += '<circle cx="' + cx + '" cy="' + (cy + 2 * u) + '" r="' + 19 * u + '" fill="#fff" stroke="#90A4AE" stroke-width="' + 2 * u + '"/>';
+      a += '<circle cx="' + cx + '" cy="' + (cy + 30 * u) + '" r="' + 24 * u + '" fill="#fff" stroke="#90A4AE" stroke-width="' + 2 * u + '"/>';
+      a += '<circle cx="' + (cx - 5 * u) + '" cy="' + (cy - 28 * u) + '" r="' + 2 * u + '" fill="#222"/><circle cx="' + (cx + 5 * u) + '" cy="' + (cy - 28 * u) + '" r="' + 2 * u + '" fill="#222"/>';
+      a += '<polygon points="' + (cx - 2 * u) + ',' + (cy - 24 * u) + ' ' + (cx + 16 * u) + ',' + (cy - 21 * u) + ' ' + (cx - 2 * u) + ',' + (cy - 19 * u) + '" fill="#FB8C00"/>';
+      a += '<rect x="' + (cx - 13 * u) + '" y="' + (cy - 12 * u) + '" width="' + 26 * u + '" height="' + 7 * u + '" rx="' + 3 * u + '" fill="#E53935"/>';
+      a += '<rect x="' + (cx + 8 * u) + '" y="' + (cy - 12 * u) + '" width="' + 7 * u + '" height="' + 16 * u + '" rx="' + 3 * u + '" fill="#E53935"/>';
+      a += '<circle cx="' + cx + '" cy="' + (cy + 2 * u) + '" r="' + 2.5 * u + '" fill="#222"/><circle cx="' + cx + '" cy="' + (cy + 12 * u) + '" r="' + 2.5 * u + '" fill="#222"/><circle cx="' + cx + '" cy="' + (cy + 30 * u) + '" r="' + 2.5 * u + '" fill="#222"/>';
+      a += '<circle cx="' + (cx - 42 * u) + '" cy="' + (cy - 32 * u) + '" r="' + 3 * u + '" fill="#fff"/><circle cx="' + (cx + 42 * u) + '" cy="' + (cy - 22 * u) + '" r="' + 3 * u + '" fill="#fff"/><circle cx="' + (cx - 44 * u) + '" cy="' + (cy + 28 * u) + '" r="' + 3 * u + '" fill="#fff"/><circle cx="' + (cx + 44 * u) + '" cy="' + (cy + 32 * u) + '" r="' + 3 * u + '" fill="#fff"/>';
+    } else {
+      // library / fallback: colorful balloons
+      a += '<circle cx="' + (cx - 26 * u) + '" cy="' + (cy - 8 * u) + '" r="' + 16 * u + '" fill="#E53935"/>';
+      a += '<circle cx="' + cx + '" cy="' + (cy - 20 * u) + '" r="' + 16 * u + '" fill="#1E88E5"/>';
+      a += '<circle cx="' + (cx + 26 * u) + '" cy="' + (cy - 8 * u) + '" r="' + 16 * u + '" fill="#43A047"/>';
+      a += '<polygon points="' + (cx - 30 * u) + ',' + (cy + 6 * u) + ' ' + (cx - 22 * u) + ',' + (cy + 6 * u) + ' ' + (cx - 26 * u) + ',' + (cy + 12 * u) + '" fill="#C62828"/>';
+      a += '<polygon points="' + (cx - 4 * u) + ',' + (cy - 6 * u) + ' ' + (cx + 4 * u) + ',' + (cy - 6 * u) + ' ' + cx + ',' + (cy + 0 * u) + '" fill="#1565C0"/>';
+      a += '<polygon points="' + (cx + 22 * u) + ',' + (cy + 6 * u) + ' ' + (cx + 30 * u) + ',' + (cy + 6 * u) + ' ' + (cx + 26 * u) + ',' + (cy + 12 * u) + '" fill="#2E7D32"/>';
+      a += '<path d="M ' + (cx - 26 * u) + ' ' + (cy + 12 * u) + ' Q ' + (cx - 30 * u) + ' ' + (cy + 30 * u) + ' ' + (cx - 22 * u) + ' ' + (cy + 40 * u) + '" fill="none" stroke="#8D6E63" stroke-width="' + 1.5 * u + '"/>';
+      a += '<path d="M ' + cx + ' ' + (cy + 0 * u) + ' Q ' + (cx + 4 * u) + ' ' + (cy + 26 * u) + ' ' + cx + ' ' + (cy + 40 * u) + '" fill="none" stroke="#8D6E63" stroke-width="' + 1.5 * u + '"/>';
+      a += '<path d="M ' + (cx + 26 * u) + ' ' + (cy + 12 * u) + ' Q ' + (cx + 30 * u) + ' ' + (cy + 30 * u) + ' ' + (cx + 22 * u) + ' ' + (cy + 40 * u) + '" fill="none" stroke="#8D6E63" stroke-width="' + 1.5 * u + '"/>';
+      a += star(cx - 44 * u, cy - 30 * u, 6 * u, '#FFD54F') + star(cx + 44 * u, cy - 34 * u, 5 * u, '#FFD54F');
+    }
+    return a;
+  }
+
+  /* Cover palettes (same values as MazeQuestCore.COVER_PALETTES; kept
+     here so the SVG renderer also works in Node, where window does
+     not exist). */
+  var COVER_PALETTES = {
+    rainbow: { bg: '#FFF8E1', band: '#FF7043', primary: '#FF7043', secondary: '#7C4DFF', accent: '#26A69A', dark: '#3E2723' },
+    ocean:   { bg: '#E1F5FE', band: '#0288D1', primary: '#0288D1', secondary: '#26C6DA', accent: '#FFCA28', dark: '#0D47A1' },
+    candy:   { bg: '#FCE4EC', band: '#EC407A', primary: '#EC407A', secondary: '#FFB300', accent: '#66BB6A', dark: '#880E4F' },
+    forest:  { bg: '#E8F5E9', band: '#43A047', primary: '#43A047', secondary: '#8D6E63', accent: '#FFB300', dark: '#1B5E20' }
+  };
+
+  function renderCover(page, W, H) {
+    var P = COVER_PALETTES[page.coverPalette] || COVER_PALETTES.rainbow;
+    var s = svgOpen(W, H);
+    // full-color cover: tinted background + colored top/bottom bands
+    s += '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="' + P.bg + '"/>';
+    s += '<rect x="0" y="0" width="' + W + '" height="72" fill="' + P.band + '"/>';
+    s += '<rect x="0" y="' + (H - 56) + '" width="' + W + '" height="56" fill="' + P.band + '"/>';
+    s += '<circle cx="70" cy="36" r="7" fill="#fff" opacity="0.85"/><circle cx="120" cy="36" r="5" fill="#FFD54F"/><circle cx="' + (W - 90) + '" cy="36" r="6" fill="#fff" opacity="0.85"/><circle cx="' + (W - 50) + '" cy="36" r="4" fill="#FFD54F"/>';
+    s += '<rect x="20" y="20" width="' + (W - 40) + '" height="' + (H - 40) + '" fill="none" stroke="' + P.primary + '" stroke-width="4"/>';
+    s += '<text x="' + W / 2 + '" y="' + (H * 0.24) + '" text-anchor="middle" font-size="38" font-weight="bold" font-family="Arial,sans-serif" fill="' + P.dark + '">' + esc(page.title) + '</text>';
+    s += '<rect x="' + (W / 2 - 60) + '" y="' + (H * 0.24 + 14) + '" width="120" height="6" rx="3" fill="' + P.accent + '"/>';
+    s += '<text x="' + W / 2 + '" y="' + (H * 0.24 + 46) + '" text-anchor="middle" font-size="16" font-family="Arial,sans-serif" fill="' + P.dark + '">' + esc(page.subtitle) + '</text>';
+    s += '<text x="' + W / 2 + '" y="' + (H * 0.24 + 74) + '" text-anchor="middle" font-size="14" font-weight="bold" font-family="Arial,sans-serif" fill="' + P.primary + '">Theme: ' + esc(page.themeLabel) + '</text>';
+    s += coverArt(page.theme || 'library', W / 2, H * 0.56, 170);
+    s += '<text x="' + W / 2 + '" y="' + (H * 0.76) + '" text-anchor="middle" font-size="13" font-family="Arial,sans-serif" fill="' + P.dark + '">Mazes, word searches and dot-to-dot puzzles.</text>';
+    s += '<text x="' + W / 2 + '" y="' + (H * 0.76 + 22) + '" text-anchor="middle" font-size="13" font-family="Arial,sans-serif" fill="' + P.dark + '">Print this book and grab a pencil. Have fun!</text>';
+    if (page.commercialLicense) {
+      s += '<text x="' + W / 2 + '" y="' + (H * 0.76 + 50) + '" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial,sans-serif" fill="#B71C1C">Commercial License - OK to sell on KDP/Etsy</text>';
+    }
+    s += '<text x="' + W / 2 + '" y="' + (H - 22) + '" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial,sans-serif" fill="#fff">Made with MazeQuest Studio</text>';
+    return s + '</svg>';
+  }
+
+  function renderMaze(page, W, H) {
+    var maze = page.maze, cols = maze.cols, rows = maze.rows;
+    var availW = W - 40, availH = H - 110;
+    var cell = Math.min(availW / cols, availH / rows);
+    var gw = cell * cols, gh = cell * rows;
+    var ox = 20 + (availW - gw) / 2, oy = 60 + (availH - gh) / 2;
+    var s = svgOpen(W, H);
+    s += '<text x="' + W / 2 + '" y="30" text-anchor="middle" font-size="15" font-weight="bold" font-family="Arial,sans-serif">Maze ' + page.num + ' - ' + esc(page.difficulty) + '</text>';
+    s += '<text x="' + W / 2 + '" y="50" text-anchor="middle" font-size="11" font-family="Arial,sans-serif">Find the way from START to FINISH.</text>';
+    var lines = '';
+    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
+      var w = maze.walls[y * cols + x];
+      var px = ox + x * cell, py = oy + y * cell;
+      if (w & 1) lines += 'M' + px + ' ' + py + 'H' + (px + cell);
+      if (w & 8) lines += 'M' + px + ' ' + py + 'V' + (py + cell);
+      if (y === rows - 1 && (w & 4)) lines += 'M' + px + ' ' + (py + cell) + 'H' + (px + cell);
+      if (x === cols - 1 && (w & 2)) lines += 'M' + (px + cell) + ' ' + py + 'V' + (py + cell);
+    }
+    s += '<path d="' + lines + '" stroke="#222" stroke-width="1.2" fill="none"/>';
+    s += '<text x="' + (ox + cell / 2) + '" y="' + (oy - 6) + '" text-anchor="middle" font-size="9" font-weight="bold" font-family="Arial,sans-serif">START</text>';
+    s += '<text x="' + (ox + gw - cell / 2) + '" y="' + (oy + gh + 14) + '" text-anchor="middle" font-size="9" font-weight="bold" font-family="Arial,sans-serif">FINISH</text>';
+    return s + '</svg>';
+  }
+
+  function renderWordSearch(page, W, H) {
+    var ws = page.ws, n = ws.size;
+    var availW = W - 40, availH = H - 180;
+    var cell = Math.min(availW / n, availH / n);
+    var gw = cell * n;
+    var ox = 20 + (availW - gw) / 2, oy = 60 + (availH - gw) / 2;
+    var s = svgOpen(W, H);
+    s += '<text x="' + W / 2 + '" y="30" text-anchor="middle" font-size="15" font-weight="bold" font-family="Arial,sans-serif">Word Search ' + page.num + ' - ' + esc(page.difficulty) + '</text>';
+    s += '<text x="' + W / 2 + '" y="50" text-anchor="middle" font-size="11" font-family="Arial,sans-serif">Find all the hidden words.</text>';
+    var fontSize = Math.min(14, cell * 0.55);
+    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
+      s += '<text x="' + (ox + (x + 0.5) * cell) + '" y="' + (oy + (y + 0.5) * cell + fontSize * 0.35) + '" text-anchor="middle" font-size="' + fontSize + '" font-family="Arial,sans-serif">' + ws.grid[y][x] + '</text>';
+    }
+    s += '<text x="' + W / 2 + '" y="' + (H - 62) + '" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Words to find:</text>';
+    var words = ws.placed.map(function (p) { return p.word; });
+    var perLine = 4;
+    for (var i = 0; i < words.length; i++) {
+      var col = i % perLine, row = Math.floor(i / perLine);
+      var tx = 40 + col * ((W - 80) / perLine);
+      s += '<text x="' + tx + '" y="' + (H - 42 + row * 18) + '" font-size="11" font-family="Arial,sans-serif">' + words[i] + '</text>';
+    }
+    return s + '</svg>';
+  }
+
+  function renderDot(page, W, H) {
+    var dot = page.dot;
+    var availW = W - 40, availH = H - 110;
+    var box = Math.min(availW, availH);
+    var ox = 20 + (availW - box) / 2, oy = 60 + (availH - box) / 2;
+    var s = svgOpen(W, H);
+    s += '<text x="' + W / 2 + '" y="30" text-anchor="middle" font-size="15" font-weight="bold" font-family="Arial,sans-serif">Dot-to-Dot ' + page.num + ' - ' + esc(dot.name) + ' - ' + esc(page.difficulty) + '</text>';
+    s += '<text x="' + W / 2 + '" y="50" text-anchor="middle" font-size="11" font-family="Arial,sans-serif">Connect the dots from 1 to ' + dot.count + '. What is it?</text>';
+    dot.points.forEach(function (p, i) {
+      var cx = ox + (p[0] / 100) * box, cy = oy + (p[1] / 100) * box;
+      s += '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="3" fill="none" stroke="#222"/>';
+      s += '<text x="' + (cx + 6) + '" y="' + (cy + 3) + '" font-size="9" font-family="Arial,sans-serif">' + (i + 1) + '</text>';
+    });
+    return s + '</svg>';
+  }
+
+  function renderNonogram(page, W, H) {
+    var n = page.rows;
+    var availW = W - 40, availH = H - 130;
+    var cell = Math.min((availW - 80) / n, (availH - 50) / n);
+    var gw = cell * n;
+    var ox = 20 + 60 + (availW - 60 - gw) / 2, oy = 70 + (availH - 50 - gw) / 2;
+    var s = svgOpen(W, H);
+    s += '<text x="' + W / 2 + '" y="30" text-anchor="middle" font-size="15" font-weight="bold" font-family="Arial,sans-serif">Nonogram ' + page.num + ' - ' + esc(page.difficulty) + '</text>';
+    s += '<text x="' + W / 2 + '" y="50" text-anchor="middle" font-size="11" font-family="Arial,sans-serif">Fill in the squares using the numbers. A picture will appear!</text>';
+    var font = Math.max(8, Math.min(12, cell * 0.5));
+    for (var x = 0; x < n; x++) {
+      var clues = page.colClues[x];
+      for (var ci = 0; ci < clues.length; ci++) {
+        s += '<text x="' + (ox + (x + 0.5) * cell) + '" y="' + (oy - 8 - (clues.length - 1 - ci) * (font + 3)) + '" text-anchor="middle" font-size="' + font + '" font-family="Arial,sans-serif">' + clues[ci] + '</text>';
+      }
+    }
+    for (var y = 0; y < n; y++) {
+      var rc = page.rowClues[y];
+      for (var ri = 0; ri < rc.length; ri++) {
+        s += '<text x="' + (ox - 8 - (rc.length - ri) * (font + 4)) + '" y="' + (oy + (y + 0.5) * cell + font * 0.35) + '" text-anchor="end" font-size="' + font + '" font-family="Arial,sans-serif">' + rc[ri] + '</text>';
+      }
+    }
+    for (var yy = 0; yy < n; yy++) for (var xx = 0; xx < n; xx++) {
+      s += '<rect x="' + (ox + xx * cell) + '" y="' + (oy + yy * cell) + '" width="' + cell + '" height="' + cell + '" fill="none" stroke="#222" stroke-width="0.7"/>';
+    }
+    return s + '</svg>';
+  }
+
+  function renderSudoku(page, W, H) {
+    var n = page.size;
+    var availW = W - 40, availH = H - 110;
+    var cell = Math.min(availW / n, availH / n, 64);
+    var gw = cell * n;
+    var ox = 20 + (availW - gw) / 2, oy = 60 + (availH - gw) / 2;
+    var s = svgOpen(W, H);
+    s += '<text x="' + W / 2 + '" y="30" text-anchor="middle" font-size="15" font-weight="bold" font-family="Arial,sans-serif">Sudoku ' + page.num + ' - ' + esc(page.difficulty) + '</text>';
+    s += '<text x="' + W / 2 + '" y="50" text-anchor="middle" font-size="11" font-family="Arial,sans-serif">Fill in every row, column and box with 1 to ' + n + '. No repeats!</text>';
+    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
+      var v = page.grid[y][x];
+      s += '<rect x="' + (ox + x * cell) + '" y="' + (oy + y * cell) + '" width="' + cell + '" height="' + cell + '" fill="none" stroke="#222" stroke-width="' + (((x % page.boxW === 0) || (y % page.boxH === 0)) ? 1.6 : 0.7) + '"/>';
+      if (v) s += '<text x="' + (ox + (x + 0.5) * cell) + '" y="' + (oy + (y + 0.5) * cell + 6) + '" text-anchor="middle" font-size="' + Math.min(18, cell * 0.55) + '" font-weight="bold" font-family="Arial,sans-serif">' + v + '</text>';
+    }
+    return s + '</svg>';
+  }
+
+  function spotShapeSvg(shape, cx, cy, size, color) {
+    var r = size / 2;
+    if (shape === 'circle') return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="2"/>';
+    if (shape === 'square') return '<rect x="' + (cx - r) + '" y="' + (cy - r) + '" width="' + size + '" height="' + size + '" fill="none" stroke="' + color + '" stroke-width="2"/>';
+    if (shape === 'triangle') return '<polygon points="' + cx + ',' + (cy - r) + ' ' + (cx - r) + ',' + (cy + r) + ' ' + (cx + r) + ',' + (cy + r) + '" fill="none" stroke="' + color + '" stroke-width="2"/>';
+    return '<polygon points="' + cx + ',' + (cy - r) + ' ' + (cx + r) + ',' + cy + ' ' + cx + ',' + (cy + r) + ' ' + (cx - r) + ',' + cy + '" fill="none" stroke="' + color + '" stroke-width="2"/>';
+  }
+  var SPOT_COLOR_HEX = ['#D92626', '#1A59D9', '#269636', '#F2730D', '#7326A6'];
+
+  function renderSpotDiff(page, W, H) {
+    var availW = W - 40, availH = H - 110;
+    var box = Math.min((availW - 20) / 2, availH);
+    var oy = 70 + (availH - box) / 2;
+    var s = svgOpen(W, H);
+    s += '<text x="' + W / 2 + '" y="30" text-anchor="middle" font-size="15" font-weight="bold" font-family="Arial,sans-serif">Spot the Difference ' + page.num + ' - ' + esc(page.difficulty) + '</text>';
+    s += '<text x="' + W / 2 + '" y="50" text-anchor="middle" font-size="11" font-family="Arial,sans-serif">Find ' + page.diffCount + ' differences between the two pictures. Circle them!</text>';
+    function scene(items, ox) {
+      var out = '';
+      items.forEach(function (it) {
+        if (it.removed) return;
+        out += spotShapeSvg(it.shape, ox + (it.x / 100) * box, oy + (it.y / 100) * box, (it.size / 100) * box, SPOT_COLOR_HEX[it.color]);
+      });
+      return out;
+    }
+    s += '<text x="' + (20 + box / 2) + '" y="' + (oy - 8) + '" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Picture A</text>';
+    s += '<text x="' + (40 + box + box / 2) + '" y="' + (oy - 8) + '" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Picture B</text>';
+    s += scene(page.itemsA, 20);
+    s += scene(page.itemsB, 40 + box);
+    return s + '</svg>';
+  }
+
+  var CBN_HEX = { 1: '#D53333', 2: '#1976D2', 3: '#FBC02D', 4: '#388E3C', 5: '#F57C00' };
+  var CBN_NAMES = { 1: 'Red', 2: 'Blue', 3: 'Yellow', 4: 'Green', 5: 'Orange' };
+
+  function renderColorByNumber(page, W, H) {
+    var availW = W - 40, availH = H - 160;
+    var cell = Math.min(availW / page.cols, availH / page.rows);
+    var gw = cell * page.cols, gh = cell * page.rows;
+    var ox = 20 + (availW - gw) / 2, oy = 60 + (availH - gh) / 2;
+    var s = svgOpen(W, H);
+    s += '<text x="' + W / 2 + '" y="30" text-anchor="middle" font-size="15" font-weight="bold" font-family="Arial,sans-serif">Color by Number ' + page.num + ' - ' + esc(page.name) + ' - ' + esc(page.difficulty) + '</text>';
+    s += '<text x="' + W / 2 + '" y="50" text-anchor="middle" font-size="11" font-family="Arial,sans-serif">Color each square with the color for its number.</text>';
+    for (var y = 0; y < page.rows; y++) for (var x = 0; x < page.cols; x++) {
+      var v = page.cells[y][x];
+      s += '<rect x="' + (ox + x * cell) + '" y="' + (oy + y * cell) + '" width="' + cell + '" height="' + cell + '" fill="none" stroke="#222" stroke-width="0.7"/>';
+      if (v) s += '<text x="' + (ox + (x + 0.5) * cell) + '" y="' + (oy + (y + 0.5) * cell + 4) + '" text-anchor="middle" font-size="' + Math.min(12, cell * 0.5) + '" font-family="Arial,sans-serif">' + v + '</text>';
+    }
+    var key = page.palette.map(function (n) { return n + ' = ' + CBN_NAMES[n]; }).join('    ');
+    s += '<text x="' + W / 2 + '" y="' + (H - 40) + '" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial,sans-serif">' + esc(key) + '</text>';
+    return s + '</svg>';
+  }
+
+  function renderLogic(page, W, H) {
+    var s = svgOpen(W, H);
+    s += '<text x="' + W / 2 + '" y="30" text-anchor="middle" font-size="15" font-weight="bold" font-family="Arial,sans-serif">Logic Puzzle ' + page.num + ' - ' + esc(page.difficulty) + '</text>';
+    s += '<text x="' + W / 2 + '" y="50" text-anchor="middle" font-size="11" font-family="Arial,sans-serif">Read the clues. Who has which pet and likes which color?</text>';
+    var y = 90;
+    s += '<text x="30" y="' + y + '" font-size="13" font-weight="bold" font-family="Arial,sans-serif">Clues:</text>';
+    y += 24;
+    page.clues.forEach(function (c, i) {
+      s += '<text x="40" y="' + y + '" font-size="12" font-family="Arial,sans-serif">' + (i + 1) + '. ' + esc(c.text) + '</text>';
+      y += 22;
+    });
+    y += 14;
+    s += '<text x="30" y="' + y + '" font-size="13" font-weight="bold" font-family="Arial,sans-serif">Your answers:</text>';
+    y += 24;
+    page.kids.forEach(function (kid) {
+      s += '<text x="40" y="' + y + '" font-size="12" font-family="Arial,sans-serif">' + esc(kid) + ':  Pet ____________     Color ____________</text>';
+      y += 24;
+    });
+    y += 10;
+    s += '<text x="30" y="' + y + '" font-size="11" font-family="Arial,sans-serif">Pets: ' + esc(page.pets.join(', ')) + '   |   Colors: ' + esc(page.colors.join(', ')) + '</text>';
+    return s + '</svg>';
+  }
+
+  function renderAnswers(page, W, H) {
+    var s = svgOpen(W, H);
+    s += '<text x="' + W / 2 + '" y="30" text-anchor="middle" font-size="17" font-weight="bold" font-family="Arial,sans-serif">Answer Key</text>';
+    s += '<text x="' + W / 2 + '" y="50" text-anchor="middle" font-size="11" font-family="Arial,sans-serif">Check your work here. No peeking before you finish!</text>';
+    var y = 80;
+    page.puzzles.forEach(function (pg) {
+      if (pg.type === 'maze') {
+        s += '<text x="30" y="' + y + '" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Maze ' + pg.num + ': solved path has ' + pg.solution.length + ' steps.</text>';
+        y += 22;
+      } else if (pg.type === 'wordsearch') {
+        s += '<text x="30" y="' + y + '" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Word Search ' + pg.num + ':</text>';
+        y += 20;
+        s += '<text x="30" y="' + y + '" font-size="11" font-family="Arial,sans-serif">' + pg.ws.placed.map(function (p) { return p.word; }).join(', ') + '</text>';
+        y += 24;
+      } else if (pg.type === 'dot') {
+        s += '<text x="30" y="' + y + '" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Dot-to-Dot ' + pg.num + ': ' + esc(pg.dot.name) + ' (' + pg.dot.count + ' dots)</text>';
+        y += 22;
+      } else if (pg.type === 'nonogram') {
+        s += '<text x="30" y="' + y + '" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Nonogram ' + pg.num + ': see the filled grid in the PDF answer key.</text>';
+        y += 22;
+      } else if (pg.type === 'sudoku') {
+        s += '<text x="30" y="' + y + '" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Sudoku ' + pg.num + ': ' + pg.solution.map(function (r) { return r.join(''); }).join(' / ') + '</text>';
+        y += 22;
+      } else if (pg.type === 'spotdiff') {
+        s += '<text x="30" y="' + y + '" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Spot the Difference ' + pg.num + ': ' + pg.diffCount + ' differences (' + pg.differences.map(function (d) { return d.text; }).join(', ') + ').</text>';
+        y += 22;
+      } else if (pg.type === 'colorbynumber') {
+        s += '<text x="30" y="' + y + '" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Color by Number ' + pg.num + ': ' + esc(pg.name) + ' - ' + pg.palette.map(function (n) { return n + ' = ' + CBN_NAMES[n]; }).join(', ') + '.</text>';
+        y += 22;
+      } else if (pg.type === 'logic') {
+        s += '<text x="30" y="' + y + '" font-size="12" font-weight="bold" font-family="Arial,sans-serif">Logic Puzzle ' + pg.num + ': ' + pg.kids.map(function (k) { return k + ' - ' + pg.solution[k].pet + ', ' + pg.solution[k].color; }).join('; ') + '.</text>';
+        y += 22;
+      }
+    });
+    return s + '</svg>';
+  }
+
+  function renderPage(page, W, H) {
+    if (page.type === 'cover') return renderCover(page, W, H);
+    if (page.type === 'maze') return renderMaze(page, W, H);
+    if (page.type === 'wordsearch') return renderWordSearch(page, W, H);
+    if (page.type === 'dot') return renderDot(page, W, H);
+    if (page.type === 'nonogram') return renderNonogram(page, W, H);
+    if (page.type === 'sudoku') return renderSudoku(page, W, H);
+    if (page.type === 'spotdiff') return renderSpotDiff(page, W, H);
+    if (page.type === 'colorbynumber') return renderColorByNumber(page, W, H);
+    if (page.type === 'logic') return renderLogic(page, W, H);
+    if (page.type === 'answers') return renderAnswers(page, W, H);
+    return '';
+  }
+
+  return { renderPage: renderPage, renderCover: renderCover, renderMaze: renderMaze, renderWordSearch: renderWordSearch, renderDot: renderDot, renderAnswers: renderAnswers, renderNonogram: renderNonogram, renderSudoku: renderSudoku, renderSpotDiff: renderSpotDiff, renderColorByNumber: renderColorByNumber, renderLogic: renderLogic };
+});
+
+</script>
+<script>
+/* MazeQuest Studio — minimal PDF writer (no dependencies).
+   Draws the book as vector PDF: mazes, word searches, dot-to-dot, cover, answers.
+   Works in the browser (window.MazeQuestPDF) and in Node (module.exports).
+   Page sizes: Letter 8.5x11in = 612x792pt, A4 = 595.28x841.89pt. */
+(function (root, factory) {
+  var lib = factory();
+  if (typeof module !== 'undefined' && module.exports) module.exports = lib;
+  root.MazeQuestPDF = lib;
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  var SIZES = {
+    letter: { w: 612, h: 792, label: 'US Letter 8.5 x 11 in' },
+    a4: { w: 595.28, h: 841.89, label: 'A4 8.27 x 11.69 in' }
+  };
+  var MARGIN = 40;
+
+  function esc(s) {
+    return String(s).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+  }
+
+  /* ---- content stream builder (PDF coords: origin bottom-left, y up) ---- */
+  function Stream() { this.ops = []; }
+  Stream.prototype.text = function (x, y, size, str, bold) {
+    this.ops.push('BT /' + (bold ? 'F2' : 'F1') + ' ' + size + ' Tf 1 0 0 1 ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' Tm (' + esc(str) + ') Tj ET');
+    return this;
+  };
+  Stream.prototype.textCenter = function (cx, y, size, str, bold) {
+    // approximate width: Helvetica avg 0.55 * size per char (bold 0.6)
+    var w = str.length * size * (bold ? 0.6 : 0.52);
+    return this.text(cx - w / 2, y, size, str, bold);
+  };
+  Stream.prototype.line = function (x1, y1, x2, y2, width, r, g, b) {
+    this.ops.push((r != null ? r + ' ' + g + ' ' + b + ' RG' : '0 0 0 RG') + ' ' + (width || 1) + ' w ' + x1.toFixed(2) + ' ' + y1.toFixed(2) + ' m ' + x2.toFixed(2) + ' ' + y2.toFixed(2) + ' l S');
+    return this;
+  };
+  Stream.prototype.rect = function (x, y, w, h, width, fill) {
+    if (fill) this.ops.push('0.95 0.95 0.95 rg ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' ' + w.toFixed(2) + ' ' + h.toFixed(2) + ' re f');
+    else this.ops.push('0 0 0 RG ' + (width || 1) + ' w ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' ' + w.toFixed(2) + ' ' + h.toFixed(2) + ' re S');
+    return this;
+  };
+  Stream.prototype.fillRect = function (x, y, w, h, r, g, b) {
+    this.ops.push(r + ' ' + g + ' ' + b + ' rg ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' ' + w.toFixed(2) + ' ' + h.toFixed(2) + ' re f');
+    return this;
+  };
+  /* Set the fill color used by following text (PDF text has no color of
+     its own). Pass 0,0,0 to go back to black. */
+  Stream.prototype.setFill = function (r, g, b) {
+    this.ops.push(r + ' ' + g + ' ' + b + ' rg');
+    return this;
+  };
+  Stream.prototype.strokeRect = function (x, y, w, h, width, r, g, b) {
+    this.ops.push(r + ' ' + g + ' ' + b + ' RG ' + (width || 1) + ' w ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' ' + w.toFixed(2) + ' ' + h.toFixed(2) + ' re S');
+    return this;
+  };
+  Stream.prototype.fillCircle = function (cx, cy, r, rgb) {
+    var k = 0.5523 * r;
+    this.ops.push(rgb[0] + ' ' + rgb[1] + ' ' + rgb[2] + ' rg ' +
+      (cx + r).toFixed(2) + ' ' + cy.toFixed(2) + ' m ' +
+      (cx + r).toFixed(2) + ' ' + (cy + k).toFixed(2) + ' ' + (cx + k).toFixed(2) + ' ' + (cy + r).toFixed(2) + ' ' + cx.toFixed(2) + ' ' + (cy + r).toFixed(2) + ' c ' +
+      (cx - k).toFixed(2) + ' ' + (cy + r).toFixed(2) + ' ' + (cx - r).toFixed(2) + ' ' + (cy + k).toFixed(2) + ' ' + (cx - r).toFixed(2) + ' ' + cy.toFixed(2) + ' c ' +
+      (cx - r).toFixed(2) + ' ' + (cy - k).toFixed(2) + ' ' + (cx - k).toFixed(2) + ' ' + (cy - r).toFixed(2) + ' ' + cx.toFixed(2) + ' ' + (cy - r).toFixed(2) + ' c ' +
+      (cx + k).toFixed(2) + ' ' + (cy - r).toFixed(2) + ' ' + (cx + r).toFixed(2) + ' ' + (cy - k).toFixed(2) + ' ' + (cx + r).toFixed(2) + ' ' + cy.toFixed(2) + ' c f');
+    return this;
+  };
+  Stream.prototype.fillPoly = function (pts, rgb) {
+    if (pts.length < 3) return this;
+    var s = rgb[0] + ' ' + rgb[1] + ' ' + rgb[2] + ' rg ' + pts[0][0].toFixed(2) + ' ' + pts[0][1].toFixed(2) + ' m ';
+    for (var i = 1; i < pts.length; i++) s += pts[i][0].toFixed(2) + ' ' + pts[i][1].toFixed(2) + ' l ';
+    s += 'h f';
+    this.ops.push(s);
+    return this;
+  };
+  function hexRgb(hex) {
+    var n = parseInt(hex.slice(1), 16);
+    return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+  }
+  Stream.prototype.circle = function (cx, cy, r, width) {
+    var k = 0.5523 * r;
+    this.ops.push('0 0 0 RG ' + (width || 1) + ' w ' +
+      (cx + r).toFixed(2) + ' ' + cy.toFixed(2) + ' m ' +
+      (cx + r).toFixed(2) + ' ' + (cy + k).toFixed(2) + ' ' + (cx + k).toFixed(2) + ' ' + (cy + r).toFixed(2) + ' ' + cx.toFixed(2) + ' ' + (cy + r).toFixed(2) + ' c ' +
+      (cx - k).toFixed(2) + ' ' + (cy + r).toFixed(2) + ' ' + (cx - r).toFixed(2) + ' ' + (cy + k).toFixed(2) + ' ' + (cx - r).toFixed(2) + ' ' + cy.toFixed(2) + ' c ' +
+      (cx - r).toFixed(2) + ' ' + (cy - k).toFixed(2) + ' ' + (cx - k).toFixed(2) + ' ' + (cy - r).toFixed(2) + ' ' + cx.toFixed(2) + ' ' + (cy - r).toFixed(2) + ' c ' +
+      (cx + k).toFixed(2) + ' ' + (cy - r).toFixed(2) + ' ' + (cx + r).toFixed(2) + ' ' + (cy - k).toFixed(2) + ' ' + (cx + r).toFixed(2) + ' ' + cy.toFixed(2) + ' c S');
+    return this;
+  };
+  Stream.prototype.polyline = function (pts, width, dashed) {
+    if (!pts.length) return this;
+    var s = (dashed ? '1 0 0 RG [4 3] 0 d ' : '1 0 0 RG ') + (width || 1.5) + ' w ';
+    s += pts[0][0].toFixed(2) + ' ' + pts[0][1].toFixed(2) + ' m ';
+    for (var i = 1; i < pts.length; i++) s += pts[i][0].toFixed(2) + ' ' + pts[i][1].toFixed(2) + ' l ';
+    s += 'S';
+    if (dashed) s += ' [] 0 d';
+    this.ops.push(s);
+    return this;
+  };
+  Stream.prototype.toString = function () { return this.ops.join('\n'); };
+
+  /* ---- page drawing ---- */
+  function drawHeader(s, book, pageNum, totalPages, W, H) {
+    s.text(MARGIN, H - 30, 9, book.meta.title.toUpperCase(), false);
+    s.line(MARGIN, H - 38, W - MARGIN, H - 38, 0.5);
+    s.textCenter(W / 2, 26, 8, 'MazeQuest Studio  |  Page ' + pageNum + ' of ' + totalPages, false);
+  }
+
+  /* ---- cover palettes (same values as MazeQuestCore.COVER_PALETTES;
+     the PDF writer reads them from its own copy so it also works in
+     Node, where window.MazeQuestCore does not exist). ---- */
+  var COVER_PALETTES = {
+    rainbow: { bg: '#FFF8E1', band: '#FF7043', primary: '#FF7043', secondary: '#7C4DFF', accent: '#26A69A', dark: '#3E2723' },
+    ocean:   { bg: '#E1F5FE', band: '#0288D1', primary: '#0288D1', secondary: '#26C6DA', accent: '#FFCA28', dark: '#0D47A1' },
+    candy:   { bg: '#FCE4EC', band: '#EC407A', primary: '#EC407A', secondary: '#FFB300', accent: '#66BB6A', dark: '#880E4F' },
+    forest:  { bg: '#E8F5E9', band: '#43A047', primary: '#43A047', secondary: '#8D6E63', accent: '#FFB300', dark: '#1B5E20' }
+  };
+
+  /* Simple flat cover art per theme, mirroring the SVG preview.
+     (cx, cy) = center in PDF coords (y up), S = art box width. */
+  function coverArtPdf(s, key, cx, cy, S) {
+    var u = S / 100;
+    var GREEN = [0.26, 0.63, 0.28], DGREEN = [0.18, 0.49, 0.20], LGREEN = [0.65, 0.84, 0.65];
+    var YELLOW = [1, 0.84, 0.31], ORANGE = [1, 0.60, 0], RED = [0.90, 0.22, 0.21];
+    var BLUE = [0.12, 0.53, 0.90], PURPLE = [0.49, 0.30, 1], PINK = [0.96, 0.56, 0.69];
+    var BROWN = [0.55, 0.43, 0.39], BLACK = [0.13, 0.13, 0.13], WHITE = [1, 1, 1], GRAY = [0.56, 0.64, 0.66];
+    if (key === 'dinosaur') {
+      s.fillCircle(cx - 14 * u, cy + 20 * u, 34 * u, GREEN);
+      s.fillCircle(cx + 44 * u, cy + 34 * u, 17 * u, GREEN);
+      s.fillPoly([[cx - 44 * u, cy + 10 * u], [cx - 62 * u, cy - 12 * u], [cx - 38 * u, cy + 2 * u]], DGREEN);
+      s.fillPoly([[cx - 28 * u, cy + 44 * u], [cx - 20 * u, cy + 58 * u], [cx - 12 * u, cy + 44 * u]], DGREEN);
+      s.fillPoly([[cx - 4 * u, cy + 48 * u], [cx + 4 * u, cy + 60 * u], [cx + 12 * u, cy + 48 * u]], DGREEN);
+      s.fillRect(cx - 30 * u, cy - 18 * u, 10 * u, 16 * u, DGREEN[0], DGREEN[1], DGREEN[2]);
+      s.fillRect(cx + 6 * u, cy - 18 * u, 10 * u, 16 * u, DGREEN[0], DGREEN[1], DGREEN[2]);
+      s.fillCircle(cx + 50 * u, cy + 38 * u, 4 * u, WHITE);
+      s.fillCircle(cx + 51 * u, cy + 38 * u, 2 * u, BLACK);
+      s.fillCircle(cx - 14 * u, cy + 12 * u, 18 * u, LGREEN);
+      s.fillCircle(cx - 52 * u, cy + 52 * u, 6 * u, YELLOW);
+      s.fillCircle(cx + 58 * u, cy - 8 * u, 5 * u, YELLOW);
+    } else if (key === 'space') {
+      s.fillCircle(cx - 34 * u, cy + 24 * u, 20 * u, PURPLE);
+      s.line(cx - 62 * u, cy + 38 * u, cx - 6 * u, cy + 10 * u, 3, 1, 0.84, 0.31);
+      s.fillPoly([[cx + 20 * u, cy + 62 * u], [cx + 32 * u, cy + 32 * u], [cx + 8 * u, cy + 32 * u]], RED);
+      s.fillRect(cx + 10 * u, cy + 0 * u, 20 * u, 32 * u, 0.93, 0.94, 0.95);
+      s.fillCircle(cx + 20 * u, cy + 16 * u, 6 * u, [0.31, 0.76, 0.97]);
+      s.fillPoly([[cx + 4 * u, cy + 0 * u], [cx + 14 * u, cy - 16 * u], [cx + 24 * u, cy + 0 * u]], ORANGE);
+      s.fillCircle(cx - 52 * u, cy + 52 * u, 5 * u, YELLOW);
+      s.fillCircle(cx + 52 * u, cy + 48 * u, 4 * u, YELLOW);
+      s.fillCircle(cx + 48 * u, cy - 24 * u, 4 * u, WHITE);
+    } else if (key === 'animals') {
+      s.fillCircle(cx, cy, 34 * u, [1, 0.54, 0.40]);
+      s.fillPoly([[cx - 28 * u, cy + 22 * u], [cx - 34 * u, cy + 44 * u], [cx - 10 * u, cy + 30 * u]], [1, 0.54, 0.40]);
+      s.fillPoly([[cx + 28 * u, cy + 22 * u], [cx + 34 * u, cy + 44 * u], [cx + 10 * u, cy + 30 * u]], [1, 0.54, 0.40]);
+      s.fillPoly([[cx - 24 * u, cy + 26 * u], [cx - 28 * u, cy + 38 * u], [cx - 14 * u, cy + 30 * u]], PINK);
+      s.fillPoly([[cx + 24 * u, cy + 26 * u], [cx + 28 * u, cy + 38 * u], [cx + 14 * u, cy + 30 * u]], PINK);
+      s.fillCircle(cx - 13 * u, cy + 4 * u, 4.5 * u, BLACK);
+      s.fillCircle(cx + 13 * u, cy + 4 * u, 4.5 * u, BLACK);
+      s.fillPoly([[cx - 5 * u, cy - 6 * u], [cx + 5 * u, cy - 6 * u], [cx, cy - 12 * u]], [0.93, 0.25, 0.48]);
+      s.line(cx - 34 * u, cy - 8 * u, cx - 12 * u, cy - 10 * u, 1.5, 0.55, 0.43, 0.39);
+      s.line(cx + 12 * u, cy - 10 * u, cx + 34 * u, cy - 8 * u, 1.5, 0.55, 0.43, 0.39);
+      s.fillCircle(cx - 22 * u, cy - 14 * u, 5 * u, [1, 0.67, 0.57]);
+      s.fillCircle(cx + 22 * u, cy - 14 * u, 5 * u, [1, 0.67, 0.57]);
+    } else if (key === 'christmas') {
+      s.fillPoly([[cx, cy + 42 * u], [cx - 22 * u, cy + 6 * u], [cx + 22 * u, cy + 6 * u]], DGREEN);
+      s.fillPoly([[cx, cy + 26 * u], [cx - 28 * u, cy - 14 * u], [cx + 28 * u, cy - 14 * u]], GREEN);
+      s.fillPoly([[cx, cy + 10 * u], [cx - 34 * u, cy - 32 * u], [cx + 34 * u, cy - 32 * u]], [0.26, 0.63, 0.28]);
+      s.fillRect(cx - 6 * u, cy - 44 * u, 12 * u, 12 * u, BROWN[0], BROWN[1], BROWN[2]);
+      s.fillCircle(cx, cy + 48 * u, 6 * u, YELLOW);
+      s.fillCircle(cx - 14 * u, cy - 2 * u, 4 * u, RED);
+      s.fillCircle(cx + 12 * u, cy + 12 * u, 4 * u, YELLOW);
+      s.fillCircle(cx + 16 * u, cy - 20 * u, 4 * u, BLUE);
+      s.fillCircle(cx - 18 * u, cy - 22 * u, 4 * u, YELLOW);
+      s.fillCircle(cx - 44 * u, cy + 34 * u, 3 * u, WHITE);
+      s.fillCircle(cx + 44 * u, cy + 28 * u, 3 * u, WHITE);
+    } else if (key === 'spring') {
+      var petals = [[0, -20], [19, -10], [19, 10], [0, 20], [-19, 10], [-19, -10]];
+      petals.forEach(function (p) { s.fillCircle(cx + p[0] * u, cy + p[1] * u, 14 * u, PINK); });
+      s.fillCircle(cx, cy, 13 * u, YELLOW);
+      s.fillRect(cx - 2 * u, cy - 44 * u, 4 * u, 32 * u, GREEN[0], GREEN[1], GREEN[2]);
+      s.fillCircle(cx - 34 * u, cy + 14 * u, 12 * u, PURPLE);
+      s.fillCircle(cx + 34 * u, cy + 2 * u, 12 * u, PURPLE);
+      s.fillCircle(cx - 27 * u, cy + 10 * u, 3 * u, BLACK);
+      s.fillCircle(cx + 27 * u, cy - 2 * u, 3 * u, BLACK);
+    } else if (key === 'summer') {
+      s.fillCircle(cx, cy, 24 * u, YELLOW);
+      for (var ri = 0; ri < 8; ri++) {
+        var ra = ri * Math.PI / 4;
+        s.line(cx + 30 * u * Math.cos(ra), cy + 30 * u * Math.sin(ra), cx + 40 * u * Math.cos(ra), cy + 40 * u * Math.sin(ra), 4, 1, 0.60, 0);
+      }
+      s.line(cx - 46 * u, cy - 34 * u, cx - 23 * u, cy - 24 * u, 4, 0.16, 0.71, 0.96);
+      s.line(cx - 23 * u, cy - 24 * u, cx, cy - 34 * u, 4, 0.16, 0.71, 0.96);
+      s.line(cx, cy - 34 * u, cx + 23 * u, cy - 44 * u, 4, 0.16, 0.71, 0.96);
+      s.line(cx + 23 * u, cy - 44 * u, cx + 46 * u, cy - 34 * u, 4, 0.16, 0.71, 0.96);
+      s.fillCircle(cx - 42 * u, cy + 30 * u, 4 * u, [1, 0.54, 0.40]);
+      s.fillCircle(cx + 44 * u, cy + 26 * u, 3 * u, [1, 0.54, 0.40]);
+    } else if (key === 'halloween') {
+      s.fillCircle(cx - 26 * u, cy + 30 * u, 14 * u, [1, 0.98, 0.77]);
+      s.fillCircle(cx, cy - 6 * u, 34 * u, [0.98, 0.55, 0]);
+      s.fillRect(cx - 4 * u, cy + 22 * u, 8 * u, 10 * u, BROWN[0], BROWN[1], BROWN[2]);
+      s.fillPoly([[cx - 16 * u, cy + 2 * u], [cx - 8 * u, cy - 8 * u], [cx - 22 * u, cy - 8 * u]], BLACK);
+      s.fillPoly([[cx + 16 * u, cy + 2 * u], [cx + 8 * u, cy - 8 * u], [cx + 22 * u, cy - 8 * u]], BLACK);
+      s.line(cx - 14 * u, cy - 16 * u, cx - 7 * u, cy - 10 * u, 2, 0.13, 0.13, 0.13);
+      s.line(cx - 7 * u, cy - 10 * u, cx, cy - 16 * u, 2, 0.13, 0.13, 0.13);
+      s.line(cx, cy - 16 * u, cx + 7 * u, cy - 10 * u, 2, 0.13, 0.13, 0.13);
+      s.line(cx + 7 * u, cy - 10 * u, cx + 14 * u, cy - 16 * u, 2, 0.13, 0.13, 0.13);
+      s.line(cx - 14 * u, cy - 16 * u, cx + 14 * u, cy - 16 * u, 2, 0.13, 0.13, 0.13);
+    } else if (key === 'winter') {
+      s.fillCircle(cx, cy + 26 * u, 14 * u, WHITE);
+      s.fillCircle(cx, cy - 2 * u, 19 * u, WHITE);
+      s.fillCircle(cx, cy - 30 * u, 24 * u, WHITE);
+      s.circle(cx, cy + 26 * u, 14 * u, 1.5);
+      s.circle(cx, cy - 2 * u, 19 * u, 1.5);
+      s.circle(cx, cy - 30 * u, 24 * u, 1.5);
+      s.fillCircle(cx - 5 * u, cy + 28 * u, 2 * u, BLACK);
+      s.fillCircle(cx + 5 * u, cy + 28 * u, 2 * u, BLACK);
+      s.fillPoly([[cx - 2 * u, cy + 24 * u], [cx + 16 * u, cy + 27 * u], [cx - 2 * u, cy + 29 * u]], [0.98, 0.55, 0]);
+      s.fillRect(cx - 13 * u, cy + 12 * u, 26 * u, 7 * u, RED[0], RED[1], RED[2]);
+      s.fillRect(cx + 8 * u, cy - 4 * u, 7 * u, 16 * u, RED[0], RED[1], RED[2]);
+      s.fillCircle(cx, cy - 2 * u, 2.5 * u, BLACK);
+      s.fillCircle(cx, cy - 12 * u, 2.5 * u, BLACK);
+      s.fillCircle(cx, cy - 30 * u, 2.5 * u, BLACK);
+      s.fillCircle(cx - 42 * u, cy + 32 * u, 3 * u, WHITE);
+      s.fillCircle(cx + 42 * u, cy + 28 * u, 3 * u, WHITE);
+    } else {
+      // library / fallback: colorful balloons
+      s.fillCircle(cx - 26 * u, cy + 8 * u, 16 * u, RED);
+      s.fillCircle(cx, cy + 20 * u, 16 * u, BLUE);
+      s.fillCircle(cx + 26 * u, cy + 8 * u, 16 * u, GREEN);
+      s.fillPoly([[cx - 30 * u, cy - 6 * u], [cx - 22 * u, cy - 6 * u], [cx - 26 * u, cy - 12 * u]], [0.78, 0.16, 0.16]);
+      s.fillPoly([[cx - 4 * u, cy + 6 * u], [cx + 4 * u, cy + 6 * u], [cx, cy + 0 * u]], [0.08, 0.40, 0.75]);
+      s.fillPoly([[cx + 22 * u, cy - 6 * u], [cx + 30 * u, cy - 6 * u], [cx + 26 * u, cy - 12 * u]], DGREEN);
+      s.line(cx - 26 * u, cy - 12 * u, cx - 22 * u, cy - 40 * u, 1.5, 0.55, 0.43, 0.39);
+      s.line(cx, cy, cx, cy - 40 * u, 1.5, 0.55, 0.43, 0.39);
+      s.line(cx + 26 * u, cy - 12 * u, cx + 22 * u, cy - 40 * u, 1.5, 0.55, 0.43, 0.39);
+      s.fillCircle(cx - 44 * u, cy + 30 * u, 5 * u, YELLOW);
+      s.fillCircle(cx + 44 * u, cy + 34 * u, 4 * u, YELLOW);
+    }
+  }
+
+  function drawCover(s, page, W, H, book) {
+    var P = COVER_PALETTES[page.coverPalette] || COVER_PALETTES.rainbow;
+    var bg = hexRgb(P.bg), band = hexRgb(P.band), primary = hexRgb(P.primary);
+    var accent = hexRgb(P.accent), dark = hexRgb(P.dark);
+    // full-color cover: tinted background + colored top/bottom bands
+    s.fillRect(0, 0, W, H, bg[0], bg[1], bg[2]);
+    s.fillRect(0, H - 72, W, 72, band[0], band[1], band[2]);
+    s.fillRect(0, 0, W, 56, band[0], band[1], band[2]);
+    s.fillCircle(70, H - 36, 7, [1, 1, 1]);
+    s.fillCircle(120, H - 36, 5, [1, 0.84, 0.31]);
+    s.fillCircle(W - 90, H - 36, 6, [1, 1, 1]);
+    s.fillCircle(W - 50, H - 36, 4, [1, 0.84, 0.31]);
+    s.strokeRect(MARGIN, MARGIN, W - 2 * MARGIN, H - 2 * MARGIN, 3, primary[0], primary[1], primary[2]);
+    s.setFill(dark[0], dark[1], dark[2]);
+    s.textCenter(W / 2, H - 190, 34, page.title, true);
+    s.fillRect(W / 2 - 60, H - 206, 120, 6, accent[0], accent[1], accent[2]);
+    s.setFill(dark[0], dark[1], dark[2]);
+    s.textCenter(W / 2, H - 232, 16, page.subtitle, false);
+    s.setFill(primary[0], primary[1], primary[2]);
+    s.textCenter(W / 2, H - 258, 13, 'Theme: ' + page.themeLabel, true);
+    s.setFill(0, 0, 0);
+    coverArtPdf(s, page.theme || 'library', W / 2, H * 0.44, 170);
+    s.setFill(dark[0], dark[1], dark[2]);
+    s.textCenter(W / 2, H * 0.24, 12, 'Mazes, word searches and dot-to-dot puzzles.', false);
+    s.textCenter(W / 2, H * 0.24 - 22, 12, 'Print this book and grab a pencil. Have fun!', false);
+    /* OTO2 commercial license: printed on the cover only when the buyer
+       turned it on in the app. */
+    if (book && book.meta && book.meta.commercialLicense) {
+      s.setFill(0.72, 0.11, 0.11);
+      s.textCenter(W / 2, H * 0.24 - 50, 11, 'Commercial License - OK to sell on KDP/Etsy', true);
+    }
+    s.setFill(1, 1, 1);
+    s.textCenter(W / 2, 24, 11, 'Made with MazeQuest Studio', true);
+    s.setFill(0, 0, 0);
+  }
+
+  function drawMaze(s, page, W, H) {
+    var maze = page.maze, cols = maze.cols, rows = maze.rows;
+    var availW = W - 2 * MARGIN, availH = H - 2 * MARGIN - 90;
+    var cell = Math.min(availW / cols, availH / rows);
+    var gw = cell * cols, gh = cell * rows;
+    var ox = MARGIN + (availW - gw) / 2, oy = MARGIN + 46 + (availH - gh) / 2;
+    s.textCenter(W / 2, H - 62, 16, 'Maze ' + page.num + '  -  ' + page.difficulty, true);
+    s.textCenter(W / 2, H - 82, 10, 'Find the way from START to FINISH.', false);
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++) {
+        var w = maze.walls[y * cols + x];
+        var px = ox + x * cell, py = oy + (rows - 1 - y) * cell; // py = top edge of cell
+        if (w & 1) s.line(px, py + cell, px + cell, py + cell, 1.2);
+        if (w & 8) s.line(px, py, px, py + cell, 1.2);
+        if (y === rows - 1 && (w & 4)) s.line(px, py, px + cell, py, 1.2);
+        if (x === cols - 1 && (w & 2)) s.line(px + cell, py, px + cell, py + cell, 1.2);
+      }
+    }
+    // start / finish markers
+    s.textCenter(ox + cell / 2, oy + gh + 6, 9, 'START', true);
+    s.textCenter(ox + gw - cell / 2, oy - 16, 9, 'FINISH', true);
+  }
+
+  function drawMazeSolution(s, page, W, H, top) {
+    var maze = page.maze, cols = maze.cols, rows = maze.rows;
+    var availW = (W - 2 * MARGIN) / 2 - 10;
+    var cell = Math.min(availW / cols, (H - 2 * MARGIN - 120) / rows);
+    var gw = cell * cols, gh = cell * rows;
+    var ox = MARGIN, oy = top - gh;
+    s.text(ox, top + 14, 11, 'Maze ' + page.num + ' solution', true);
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++) {
+        var w = maze.walls[y * cols + x];
+        var px = ox + x * cell, py = oy + (rows - 1 - y) * cell;
+        if (w & 1) s.line(px, py + cell, px + cell, py + cell, 0.8);
+        if (w & 8) s.line(px, py, px, py + cell, 0.8);
+        if (y === rows - 1 && (w & 4)) s.line(px, py, px + cell, py, 0.8);
+        if (x === cols - 1 && (w & 2)) s.line(px + cell, py, px + cell, py + cell, 0.8);
+      }
+    }
+    var pts = page.solution.map(function (c) {
+      return [ox + (c[0] + 0.5) * cell, oy + (rows - 1 - c[1] + 0.5) * cell];
+    });
+    s.polyline(pts, 1.5, true);
+    return gh + 30;
+  }
+
+  function drawWordSearch(s, page, W, H) {
+    var ws = page.ws, n = ws.size;
+    var availW = W - 2 * MARGIN, availH = H - 2 * MARGIN - 170;
+    var cell = Math.min(availW / n, availH / n);
+    var gw = cell * n;
+    var ox = MARGIN + (availW - gw) / 2, oy = MARGIN + 120 + (availH - gw) / 2;
+    s.textCenter(W / 2, H - 62, 16, 'Word Search ' + page.num + '  -  ' + page.difficulty, true);
+    s.textCenter(W / 2, H - 82, 10, 'Find all the hidden words. Words can go across, down or diagonal.', false);
+    for (var y = 0; y < n; y++) {
+      for (var x = 0; x < n; x++) {
+        var cx = ox + (x + 0.5) * cell, cy = oy + (n - 1 - y + 0.5) * cell;
+        s.textCenter(cx, cy - 4, Math.min(14, cell * 0.55), ws.grid[y][x], false);
+      }
+    }
+    s.textCenter(W / 2, MARGIN + 96, 12, 'Words to find:', true);
+    var words = ws.placed.map(function (p) { return p.word; });
+    var perLine = 4, lineH = 18;
+    for (var i = 0; i < words.length; i++) {
+      var col = i % perLine, row = Math.floor(i / perLine);
+      var tx = MARGIN + 30 + col * ((W - 2 * MARGIN - 60) / perLine);
+      s.text(tx, MARGIN + 76 - row * lineH, 11, words[i], false);
+    }
+  }
+
+  function drawWordSearchSolution(s, page, W, H, top) {
+    var ws = page.ws, n = ws.size;
+    var availW = (W - 2 * MARGIN) / 2 - 10;
+    var cell = Math.min(availW / n, 13);
+    var gw = cell * n;
+    var ox = MARGIN, oy = top - gw;
+    s.text(ox, top + 14, 11, 'Word Search ' + page.num + ' answers', true);
+    for (var y = 0; y < n; y++) {
+      for (var x = 0; x < n; x++) {
+        var cx = ox + (x + 0.5) * cell, cy = oy + (n - 1 - y + 0.5) * cell;
+        s.textCenter(cx, cy - 3, 9, ws.grid[y][x], false);
+      }
+    }
+    ws.placed.forEach(function (p) {
+      var x0 = ox + (p.x + 0.5) * cell, y0 = oy + (n - 1 - p.y + 0.5) * cell;
+      var x1 = ox + (p.x + p.dx * (p.word.length - 1) + 0.5) * cell;
+      var y1 = oy + (n - 1 - (p.y + p.dy * (p.word.length - 1)) + 0.5) * cell;
+      s.line(x0, y0, x1, y1, 1.2, 1, 0, 0);
+    });
+    return gw + 30;
+  }
+
+  function drawDot(s, page, W, H) {
+    var dot = page.dot;
+    var availW = W - 2 * MARGIN, availH = H - 2 * MARGIN - 90;
+    var box = Math.min(availW, availH);
+    var ox = MARGIN + (availW - box) / 2, oy = MARGIN + 46 + (availH - box) / 2;
+    s.textCenter(W / 2, H - 62, 16, 'Dot-to-Dot ' + page.num + '  -  ' + dot.name + '  -  ' + page.difficulty, true);
+    s.textCenter(W / 2, H - 82, 10, 'Connect the dots from 1 to ' + dot.count + '. What is it?', false);
+    dot.points.forEach(function (p, i) {
+      var cx = ox + (p[0] / 100) * box, cy = oy + (1 - p[1] / 100) * box;
+      s.circle(cx, cy, 2.5, 1);
+      s.text(cx + 5, cy + 3, 8, String(i + 1), false);
+    });
+  }
+
+  function drawDotSolution(s, page, W, H, top) {
+    var dot = page.dot;
+    var box = Math.min((W - 2 * MARGIN) / 2 - 10, 200);
+    var ox = MARGIN, oy = top - box;
+    s.text(ox, top + 14, 11, 'Dot-to-Dot ' + page.num + ' answer: ' + dot.name, true);
+    var pts = dot.points.map(function (p) { return [ox + (p[0] / 100) * box, oy + (1 - p[1] / 100) * box]; });
+    pts.push(pts[0]);
+    s.polyline(pts, 1.2, false);
+    return box + 30;
+  }
+
+  function drawAnswers(s, page, W, H) {
+    s.textCenter(W / 2, H - 62, 18, 'Answer Key', true);
+    s.textCenter(W / 2, H - 82, 10, 'Check your work here. No peeking before you finish!', false);
+    var top = H - 110;
+    // lay out solutions in two columns: mazes/word searches/nonograms/
+    // sudoku/color-by-number left, dots/spot-the-difference/logic right
+    var leftTop = top, rightTop = top;
+    page.puzzles.forEach(function (pg) {
+      if (pg.type === 'maze') {
+        if (leftTop < 140) return; // out of room, skip (rare; page count small)
+        leftTop -= drawMazeSolution(s, pg, W, H, leftTop);
+      } else if (pg.type === 'wordsearch') {
+        if (leftTop < 140) return;
+        leftTop -= drawWordSearchSolution(s, pg, W, H, leftTop);
+      } else if (pg.type === 'nonogram') {
+        if (leftTop < 200) return;
+        leftTop -= drawNonogramSolution(s, pg, W, H, leftTop);
+      } else if (pg.type === 'sudoku') {
+        if (leftTop < 140) return;
+        leftTop -= drawSudokuSolution(s, pg, W, H, leftTop);
+      } else if (pg.type === 'colorbynumber') {
+        if (leftTop < 140) return;
+        leftTop -= drawColorByNumberSolution(s, pg, W, H, leftTop);
+      } else if (pg.type === 'dot') {
+        if (rightTop < 140) return;
+        rightTop -= drawDotSolution(s, pg, W, H, rightTop);
+      } else if (pg.type === 'spotdiff') {
+        if (rightTop < 300) return;
+        rightTop -= drawSpotDiffSolution(s, pg, W, H, rightTop);
+      } else if (pg.type === 'logic') {
+        if (rightTop < 140) return;
+        rightTop -= drawLogicSolution(s, pg, W, H, rightTop);
+      }
+    });
+  }
+
+  /* ---- OTO1 puzzle pages ---- */
+  var CBN_RGB = {
+    1: [0.83, 0.20, 0.20], 2: [0.10, 0.46, 0.82], 3: [0.98, 0.75, 0.18],
+    4: [0.22, 0.56, 0.24], 5: [0.96, 0.49, 0.00]
+  };
+  var CBN_NAMES = { 1: 'Red', 2: 'Blue', 3: 'Yellow', 4: 'Green', 5: 'Orange' };
+
+  function drawNonogramGrid(s, page, ox, oy, cell, showSolution) {
+    var n = page.rows, m = page.cols;
+    var font = Math.max(7, Math.min(11, cell * 0.5));
+    // column clues above the grid
+    for (var x = 0; x < m; x++) {
+      var clues = page.colClues[x];
+      for (var ci = 0; ci < clues.length; ci++) {
+        s.textCenter(ox + (x + 0.5) * cell, oy + n * cell + 6 + (clues.length - 1 - ci) * (font + 3), font, String(clues[ci]), false);
+      }
+    }
+    // row clues left of the grid
+    for (var y = 0; y < n; y++) {
+      var rc = page.rowClues[y];
+      for (var ri = 0; ri < rc.length; ri++) {
+        s.text(ox - 12 - (rc.length - ri) * (font + 4), oy + (n - 1 - y) * cell + cell / 2 - 3, font, String(rc[ri]), false);
+      }
+    }
+    for (var yy = 0; yy < n; yy++) {
+      for (var xx = 0; xx < m; xx++) {
+        var px = ox + xx * cell, py = oy + (n - 1 - yy) * cell;
+        if (showSolution && page.solution[yy][xx]) s.fillRect(px, py, cell, cell, 0.1, 0.1, 0.1);
+        s.rect(px, py, cell, cell, 0.5);
+      }
+    }
+    // thick lines every 5 cells
+    for (var gx = 0; gx <= m; gx += 5) s.line(ox + gx * cell, oy, ox + gx * cell, oy + n * cell, 1.2);
+    for (var gy = 0; gy <= n; gy += 5) s.line(ox, oy + gy * cell, ox + m * cell, oy + gy * cell, 1.2);
+  }
+
+  function drawNonogram(s, page, W, H) {
+    var n = page.rows;
+    var availW = W - 2 * MARGIN, availH = H - 2 * MARGIN - 110;
+    var cell = Math.min((availW - 90) / n, (availH - 50) / n);
+    var gw = cell * n;
+    var ox = MARGIN + 70 + (availW - 70 - gw) / 2, oy = MARGIN + 46 + (availH - 50 - gw) / 2;
+    s.textCenter(W / 2, H - 62, 16, 'Nonogram ' + page.num + '  -  ' + page.difficulty, true);
+    s.textCenter(W / 2, H - 82, 10, 'Fill in the squares using the numbers. A picture will appear!', false);
+    drawNonogramGrid(s, page, ox, oy, cell, false);
+  }
+
+  function drawNonogramSolution(s, page, W, H, top) {
+    var n = page.rows;
+    var availW = (W - 2 * MARGIN) / 2 - 10;
+    var cell = Math.min(availW / n, (H - 2 * MARGIN - 120) / n, 18);
+    var ox = MARGIN + 46, oy = top - cell * n - 40;
+    s.text(ox - 46, top + 14, 11, 'Nonogram ' + page.num + ' answer', true);
+    drawNonogramGrid(s, page, ox, oy, cell, true);
+    return cell * n + 70;
+  }
+
+  function drawSudokuGrid(s, page, ox, oy, cell, showSolution) {
+    var n = page.size;
+    for (var y = 0; y < n; y++) {
+      for (var x = 0; x < n; x++) {
+        var px = ox + x * cell, py = oy + (n - 1 - y) * cell;
+        var v = showSolution ? page.solution[y][x] : page.grid[y][x];
+        if (v) s.textCenter(px + cell / 2, py + cell / 2 - 5, Math.min(16, cell * 0.55), String(v), !showSolution && page.grid[y][x] !== 0);
+        s.rect(px, py, cell, cell, 0.5);
+      }
+    }
+    for (var bx = 0; bx <= n; bx += page.boxW) s.line(ox + bx * cell, oy, ox + bx * cell, oy + n * cell, 1.4);
+    for (var by = 0; by <= n; by += page.boxH) s.line(ox, oy + by * cell, ox + n * cell, oy + by * cell, 1.4);
+  }
+
+  function drawSudoku(s, page, W, H) {
+    var n = page.size;
+    var availW = W - 2 * MARGIN, availH = H - 2 * MARGIN - 90;
+    var cell = Math.min(availW / n, availH / n, 72);
+    var gw = cell * n;
+    var ox = MARGIN + (availW - gw) / 2, oy = MARGIN + 46 + (availH - gw) / 2;
+    s.textCenter(W / 2, H - 62, 16, 'Sudoku ' + page.num + '  -  ' + page.difficulty, true);
+    s.textCenter(W / 2, H - 82, 10, 'Fill in every row, column and box with 1 to ' + n + '. No repeats!', false);
+    drawSudokuGrid(s, page, ox, oy, cell, false);
+  }
+
+  function drawSudokuSolution(s, page, W, H, top) {
+    var n = page.size;
+    var cell = Math.min(((W - 2 * MARGIN) / 2 - 10) / n, 20);
+    var ox = MARGIN, oy = top - cell * n;
+    s.text(ox, top + 14, 11, 'Sudoku ' + page.num + ' answer', true);
+    drawSudokuGrid(s, page, ox, oy, cell, true);
+    return cell * n + 30;
+  }
+
+  function drawSpotShape(s, shape, cx, cy, size, rgb, width) {
+    if (shape === 'circle') { s.circle(cx, cy, size / 2, width); return; }
+    var r = size / 2;
+    if (shape === 'square') { s.rect(cx - r, cy - r, size, size, width); return; }
+    if (shape === 'triangle') {
+      s.line(cx, cy + r, cx - r, cy - r, width, rgb[0], rgb[1], rgb[2]);
+      s.line(cx - r, cy - r, cx + r, cy - r, width, rgb[0], rgb[1], rgb[2]);
+      s.line(cx + r, cy - r, cx, cy + r, width, rgb[0], rgb[1], rgb[2]);
+      return;
+    }
+    // diamond
+    s.line(cx, cy + r, cx + r, cy, width, rgb[0], rgb[1], rgb[2]);
+    s.line(cx + r, cy, cx, cy - r, width, rgb[0], rgb[1], rgb[2]);
+    s.line(cx, cy - r, cx - r, cy, width, rgb[0], rgb[1], rgb[2]);
+    s.line(cx - r, cy, cx, cy + r, width, rgb[0], rgb[1], rgb[2]);
+  }
+
+  function drawSpotScene(s, items, ox, oy, box, circleDiffs) {
+    var sc = box / 100;
+    items.forEach(function (it) {
+      if (it.removed) return;
+      var rgb = [[0.85, 0.15, 0.15], [0.10, 0.35, 0.85], [0.15, 0.55, 0.20], [0.95, 0.45, 0.05], [0.45, 0.15, 0.65]][it.color];
+      var cx = ox + it.x * sc, cy = oy + (100 - it.y) * sc;
+      drawSpotShape(s, it.shape, cx, cy, it.size * sc, rgb, 1.4);
+    });
+    if (circleDiffs) {
+      circleDiffs.forEach(function (d) {
+        s.circle(ox + d.x * sc, oy + (100 - d.y) * sc, 11 * sc, 2);
+      });
+    }
+  }
+
+  function drawSpotDiff(s, page, W, H) {
+    var availW = W - 2 * MARGIN, availH = H - 2 * MARGIN - 90;
+    var box = Math.min((availW - 20) / 2, availH);
+    var oy = MARGIN + 46 + (availH - box) / 2;
+    s.textCenter(W / 2, H - 62, 16, 'Spot the Difference ' + page.num + '  -  ' + page.difficulty, true);
+    s.textCenter(W / 2, H - 82, 10, 'Find ' + page.diffCount + ' differences between the two pictures. Circle them!', false);
+    s.textCenter(MARGIN + box / 2, oy + box + 14, 11, 'Picture A', true);
+    s.textCenter(MARGIN + box + 20 + box / 2, oy + box + 14, 11, 'Picture B', true);
+    drawSpotScene(s, page.itemsA, MARGIN, oy, box, null);
+    drawSpotScene(s, page.itemsB, MARGIN + box + 20, oy, box, null);
+  }
+
+  function drawSpotDiffSolution(s, page, W, H, top) {
+    var box = Math.min((W - 2 * MARGIN) / 2 - 10, 190);
+    var oy = top - box;
+    s.text(MARGIN, top + 14, 11, 'Spot the Difference ' + page.num + ' answers (' + page.diffCount + ')', true);
+    var diffsA = page.differences.map(function (d) { return { x: d.ax, y: d.ay }; });
+    var diffsB = page.differences.map(function (d) { return { x: d.bx, y: d.by }; });
+    drawSpotScene(s, page.itemsA, MARGIN, oy, box, diffsA);
+    drawSpotScene(s, page.itemsB, MARGIN, oy - box - 24, box, diffsB);
+    return box * 2 + 54;
+  }
+
+  function drawColorGrid(s, page, ox, oy, cell, showSolution) {
+    for (var y = 0; y < page.rows; y++) {
+      for (var x = 0; x < page.cols; x++) {
+        var v = page.cells[y][x];
+        var px = ox + x * cell, py = oy + (page.rows - 1 - y) * cell;
+        if (v) {
+          if (showSolution) { var rgb = CBN_RGB[v]; s.fillRect(px, py, cell, cell, rgb[0], rgb[1], rgb[2]); }
+          else s.textCenter(px + cell / 2, py + cell / 2 - 4, Math.min(12, cell * 0.5), String(v), false);
+        }
+        s.rect(px, py, cell, cell, 0.5);
+      }
+    }
+  }
+
+  function drawColorByNumber(s, page, W, H) {
+    var availW = W - 2 * MARGIN, availH = H - 2 * MARGIN - 130;
+    var cell = Math.min(availW / page.cols, availH / page.rows);
+    var gw = cell * page.cols, gh = cell * page.rows;
+    var ox = MARGIN + (availW - gw) / 2, oy = MARGIN + 86 + (availH - gh) / 2;
+    s.textCenter(W / 2, H - 62, 16, 'Color by Number ' + page.num + '  -  ' + page.name + '  -  ' + page.difficulty, true);
+    s.textCenter(W / 2, H - 82, 10, 'Color each square with the color for its number.', false);
+    drawColorGrid(s, page, ox, oy, cell, false);
+    var key = page.palette.map(function (n) { return n + ' = ' + CBN_NAMES[n]; }).join('    ');
+    s.textCenter(W / 2, MARGIN + 62, 12, key, true);
+  }
+
+  function drawColorByNumberSolution(s, page, W, H, top) {
+    var cell = Math.min(((W - 2 * MARGIN) / 2 - 10) / page.cols, 14);
+    var ox = MARGIN, oy = top - cell * page.rows;
+    s.text(ox, top + 14, 11, 'Color by Number ' + page.num + ' answer: ' + page.name, true);
+    drawColorGrid(s, page, ox, oy, cell, true);
+    return cell * page.rows + 30;
+  }
+
+  function drawLogic(s, page, W, H) {
+    s.textCenter(W / 2, H - 62, 16, 'Logic Puzzle ' + page.num + '  -  ' + page.difficulty, true);
+    s.textCenter(W / 2, H - 82, 10, 'Read the clues. Who has which pet and likes which color?', false);
+    var y = H - 120;
+    s.text(MARGIN, y, 13, 'Clues:', true);
+    y -= 24;
+    page.clues.forEach(function (c, i) {
+      s.text(MARGIN + 10, y, 12, (i + 1) + '. ' + c.text, false);
+      y -= 22;
+    });
+    y -= 14;
+    s.text(MARGIN, y, 13, 'Your answers:', true);
+    y -= 24;
+    page.kids.forEach(function (kid) {
+      s.text(MARGIN + 10, y, 12, kid + ':  Pet ____________     Color ____________', false);
+      y -= 24;
+    });
+    y -= 10;
+    s.text(MARGIN, y, 11, 'Pets: ' + page.pets.join(', ') + '   |   Colors: ' + page.colors.join(', '), false);
+  }
+
+  function drawLogicSolution(s, page, W, H, top) {
+    s.text(MARGIN, top + 14, 11, 'Logic Puzzle ' + page.num + ' answer', true);
+    var y = top - 8;
+    page.kids.forEach(function (kid) {
+      var sol = page.solution[kid];
+      s.text(MARGIN, y, 11, kid + ' - ' + sol.pet + ', ' + sol.color, false);
+      y -= 18;
+    });
+    return (top - y) + 22;
+  }
+
+  /* ---- assemble PDF ---- */
+  function buildPDF(book, sizeKey) {
+    var size = SIZES[sizeKey] || SIZES.letter;
+    var W = size.w, H = size.h;
+    var totalPages = book.pages.length;
+    var kids = book.pages.map(function (page, i) { return (6 + i * 2) + ' 0 R'; }).join(' ');
+    var finalObjects = [null];
+    finalObjects.push('<< /Type /Catalog /Pages 2 0 R >>'); // 1
+    finalObjects.push('<< /Type /Pages /Kids [' + kids + '] /Count ' + book.pages.length + ' >>'); // 2
+    finalObjects.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'); // 3
+    finalObjects.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>'); // 4
+    book.pages.forEach(function (page, idx) {
+      var contentId = 5 + idx * 2;
+      var pageId = 6 + idx * 2;
+      var s = new Stream();
+      if (page.type === 'cover') drawCover(s, page, W, H, book);
+      else if (page.type === 'maze') { drawHeader(s, book, idx + 1, totalPages, W, H); drawMaze(s, page, W, H); }
+      else if (page.type === 'wordsearch') { drawHeader(s, book, idx + 1, totalPages, W, H); drawWordSearch(s, page, W, H); }
+      else if (page.type === 'dot') { drawHeader(s, book, idx + 1, totalPages, W, H); drawDot(s, page, W, H); }
+      else if (page.type === 'nonogram') { drawHeader(s, book, idx + 1, totalPages, W, H); drawNonogram(s, page, W, H); }
+      else if (page.type === 'sudoku') { drawHeader(s, book, idx + 1, totalPages, W, H); drawSudoku(s, page, W, H); }
+      else if (page.type === 'spotdiff') { drawHeader(s, book, idx + 1, totalPages, W, H); drawSpotDiff(s, page, W, H); }
+      else if (page.type === 'colorbynumber') { drawHeader(s, book, idx + 1, totalPages, W, H); drawColorByNumber(s, page, W, H); }
+      else if (page.type === 'logic') { drawHeader(s, book, idx + 1, totalPages, W, H); drawLogic(s, page, W, H); }
+      else if (page.type === 'answers') { drawHeader(s, book, idx + 1, totalPages, W, H); drawAnswers(s, page, W, H); }
+      var content = s.toString();
+      finalObjects.push('<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream'); // contentId
+      finalObjects.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + W + ' ' + H + '] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ' + contentId + ' 0 R >>'); // pageId
+    });
+
+    var out = '%PDF-1.4\n';
+    var offsets = [0];
+    for (var i = 1; i < finalObjects.length; i++) {
+      offsets.push(out.length);
+      out += i + ' 0 obj\n' + finalObjects[i] + '\nendobj\n';
+    }
+    var xrefPos = out.length;
+    out += 'xref\n0 ' + finalObjects.length + '\n';
+    out += '0000000000 65535 f \n';
+    for (var j = 1; j < finalObjects.length; j++) {
+      out += ('0000000000' + offsets[j]).slice(-10) + ' 00000 n \n';
+    }
+    out += 'trailer\n<< /Size ' + finalObjects.length + ' /Root 1 0 R >>\nstartxref\n' + xrefPos + '\n%%EOF';
+    var bytes = new Uint8Array(out.length);
+    for (var b = 0; b < out.length; b++) bytes[b] = out.charCodeAt(b) & 0xff;
+    return bytes;
+  }
+
+  return { SIZES: SIZES, buildPDF: buildPDF };
+});
+
+</script>
+<script>
+/* MazeQuest Studio — app UI wiring (browser only).
+   Unlocks: OTO1 (5 extra puzzle types + 500-theme library), OTO2
+   (unlimited books + commercial license), OTO3 (seasonal themes +
+   monthly templates). Unlock codes are entered in the unlock panel
+   and stored in localStorage by unlock.js (demo codes for now — see
+   UNLOCK-CODES.md; replaced by the WarriorPlus webhook at launch). */
+(function () {
+  'use strict';
+
+  var core = window.MazeQuestCore;
+  var oto = window.MazeQuestOTO;
+  var svgLib = window.MazeQuestSVG;
+  var pdfLib = window.MazeQuestPDF;
+  var unlock = window.MazeQuestUnlock;
+
+  var state = { theme: 'dinosaur', coverPalette: 'rainbow', libraryTopic: null, book: null, pageIndex: 0 };
+
+  var THEME_ORDER = ['dinosaur', 'space', 'animals', 'christmas'];
+  var SEASONAL_ORDER = ['spring', 'summer', 'halloween', 'winter'];
+  var OTO_LABELS = {
+    oto1: 'OTO1 — 5 extra puzzle types + 500-theme library',
+    oto2: 'OTO2 — Unlimited books + commercial license',
+    oto3: 'OTO3 — Seasonal packs + new templates every month'
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+  /* Small flat icons for the theme cards (pure inline SVG, no images). */
+  var THEME_ICONS = {
+    dinosaur: '<svg viewBox="0 0 48 36" width="48" height="36" aria-hidden="true"><ellipse cx="20" cy="24" rx="14" ry="9" fill="#43A047"/><circle cx="36" cy="14" r="8" fill="#43A047"/><polygon points="6,22 0,12 10,18" fill="#2E7D32"/><polygon points="16,16 20,8 24,16" fill="#2E7D32"/><circle cx="38" cy="12" r="2" fill="#fff"/><circle cx="38.5" cy="12" r="1" fill="#222"/><rect x="12" y="30" width="4" height="5" rx="2" fill="#2E7D32"/><rect x="24" y="30" width="4" height="5" rx="2" fill="#2E7D32"/></svg>',
+    space: '<svg viewBox="0 0 48 36" width="48" height="36" aria-hidden="true"><circle cx="10" cy="10" r="6" fill="#7C4DFF"/><ellipse cx="10" cy="10" rx="10" ry="3" fill="none" stroke="#FFD54F" stroke-width="1.5" transform="rotate(-20 10 10)"/><polygon points="30,2 36,14 24,14" fill="#E53935"/><rect x="25" y="14" width="10" height="12" rx="3" fill="#ECEFF1" stroke="#90A4AE"/><circle cx="30" cy="19" r="3" fill="#4FC3F7"/><polygon points="25,26 30,34 35,26" fill="#FF9800"/></svg>',
+    animals: '<svg viewBox="0 0 48 36" width="48" height="36" aria-hidden="true"><circle cx="24" cy="20" r="13" fill="#FF8A65"/><polygon points="14,12 11,2 21,8" fill="#FF8A65"/><polygon points="34,12 37,2 27,8" fill="#FF8A65"/><circle cx="19" cy="18" r="2" fill="#222"/><circle cx="29" cy="18" r="2" fill="#222"/><polygon points="22,23 26,23 24,26" fill="#EC407A"/></svg>',
+    christmas: '<svg viewBox="0 0 48 36" width="48" height="36" aria-hidden="true"><polygon points="24,2 14,16 34,16" fill="#2E7D32"/><polygon points="24,10 10,24 38,24" fill="#388E3C"/><polygon points="24,18 8,32 40,32" fill="#43A047"/><rect x="21" y="32" width="6" height="4" fill="#8D6E63"/><circle cx="18" cy="20" r="1.8" fill="#E53935"/><circle cx="29" cy="14" r="1.8" fill="#FFCA28"/><circle cx="28" cy="26" r="1.8" fill="#1E88E5"/></svg>',
+    spring: '<svg viewBox="0 0 48 36" width="48" height="36" aria-hidden="true"><circle cx="24" cy="8" r="5" fill="#F48FB1"/><circle cx="32" cy="14" r="5" fill="#F48FB1"/><circle cx="29" cy="24" r="5" fill="#F48FB1"/><circle cx="19" cy="24" r="5" fill="#F48FB1"/><circle cx="16" cy="14" r="5" fill="#F48FB1"/><circle cx="24" cy="16" r="5" fill="#FFD54F"/><rect x="23" y="22" width="2" height="12" fill="#43A047"/></svg>',
+    summer: '<svg viewBox="0 0 48 36" width="48" height="36" aria-hidden="true"><circle cx="24" cy="14" r="8" fill="#FFD54F"/><line x1="24" y1="2" x2="24" y2="5" stroke="#FF9800" stroke-width="2" stroke-linecap="round"/><line x1="24" y1="23" x2="24" y2="26" stroke="#FF9800" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="14" x2="15" y2="14" stroke="#FF9800" stroke-width="2" stroke-linecap="round"/><line x1="33" y1="14" x2="36" y2="14" stroke="#FF9800" stroke-width="2" stroke-linecap="round"/><path d="M6 30 Q12 26 18 30 Q24 34 30 30 Q36 26 42 30" fill="none" stroke="#29B6F6" stroke-width="2" stroke-linecap="round"/></svg>',
+    halloween: '<svg viewBox="0 0 48 36" width="48" height="36" aria-hidden="true"><ellipse cx="24" cy="20" rx="14" ry="11" fill="#FB8C00"/><rect x="22" y="7" width="4" height="5" fill="#6D4C41"/><polygon points="18,16 21,20 15,20" fill="#333"/><polygon points="30,16 33,20 27,20" fill="#333"/><polygon points="18,25 21,22 24,25 27,22 30,25 30,28 18,28" fill="#333"/></svg>',
+    winter: '<svg viewBox="0 0 48 36" width="48" height="36" aria-hidden="true"><circle cx="24" cy="9" r="6" fill="#fff" stroke="#90A4AE"/><circle cx="24" cy="21" r="8" fill="#fff" stroke="#90A4AE"/><circle cx="24" cy="31" r="10" fill="#fff" stroke="#90A4AE"/><circle cx="22" cy="8" r="1" fill="#222"/><circle cx="26" cy="8" r="1" fill="#222"/><polygon points="24,10 32,12 24,13" fill="#FB8C00"/><rect x="16" y="14" width="16" height="3" rx="1.5" fill="#E53935"/></svg>'
+  };
+
+  function buildThemeCards() {
+    var box = $('themes');
+    box.innerHTML = '';
+    THEME_ORDER.forEach(function (key) { addThemeCard(box, key, false); });
+    SEASONAL_ORDER.forEach(function (key) { addThemeCard(box, key, true); });
+  }
+
+  function addThemeCard(box, key, seasonal) {
+    var t = core.THEMES[key];
+    var locked = seasonal && !unlock.isUnlocked('oto3');
+    var card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'theme-card' + (state.theme === key && !state.libraryTopic ? ' selected' : '') + (locked ? ' locked' : '');
+    card.style.borderTopColor = t.color;
+    card.innerHTML = '<span class="theme-icon">' + (THEME_ICONS[key] || '') + '</span><strong>' + t.label + (locked ? ' 🔒' : '') + '</strong><span>' + t.words.slice(0, 5).join(', ') + '...</span>';
+    card.addEventListener('click', function () {
+      if (locked) {
+        $('unlockStatus').textContent = 'The ' + t.label + ' theme is part of OTO3 (Seasonal Packs). Enter your OTO3 code above to unlock it.';
+        return;
+      }
+      state.theme = key;
+      state.libraryTopic = null;
+      var sel = $('libraryTopic');
+      if (sel) sel.value = '';
+      buildThemeCards();
+    });
+    box.appendChild(card);
+  }
+
+  function buildPalettePicker() {
+    var box = $('coverPalettes');
+    if (!box) return;
+    box.innerHTML = '';
+    Object.keys(core.COVER_PALETTES).forEach(function (key) {
+      var p = core.COVER_PALETTES[key];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'palette-card' + (state.coverPalette === key ? ' selected' : '');
+      btn.innerHTML = '<span class="palette-dots"><span style="background:' + p.bg + ';border-color:' + p.primary + '"></span><span style="background:' + p.primary + '"></span><span style="background:' + p.secondary + '"></span><span style="background:' + p.accent + '"></span></span><strong>' + p.label + '</strong>';
+      btn.addEventListener('click', function () {
+        state.coverPalette = key;
+        buildPalettePicker();
+        // live preview: recolor the cover of the book already made
+        if (state.book) {
+          state.book.meta.coverPalette = key;
+          state.book.pages[0].coverPalette = key;
+          renderPage();
+        }
+      });
+      box.appendChild(btn);
+    });
+  }
+
+  function buildLibrarySelect() {
+    var section = $('librarySection');
+    if (!unlock.isUnlocked('oto1')) { section.classList.add('hidden'); return; }
+    section.classList.remove('hidden');
+    var sel = $('libraryTopic');
+    if (sel.options.length) return; // already built
+    var def = document.createElement('option');
+    def.value = '';
+    def.textContent = '— Use the theme above —';
+    sel.appendChild(def);
+    oto.LIBRARY_CATEGORIES.forEach(function (cat) {
+      var group = document.createElement('optgroup');
+      group.label = cat.label + ' (' + cat.words.length + ' topics)';
+      cat.words.forEach(function (w) {
+        var opt = document.createElement('option');
+        opt.value = cat.id + '-' + w.toLowerCase();
+        opt.textContent = w.charAt(0) + w.slice(1).toLowerCase();
+        group.appendChild(opt);
+      });
+      sel.appendChild(group);
+    });
+    sel.addEventListener('change', function () {
+      state.libraryTopic = sel.value || null;
+      buildThemeCards();
+    });
+  }
+
+  function buildMonthlyCard() {
+    var section = $('monthlySection');
+    if (!unlock.isUnlocked('oto3')) { section.classList.add('hidden'); return; }
+    section.classList.remove('hidden');
+    var tpl = oto.getMonthlyTemplate(new Date());
+    $('monthlyTitle').textContent = tpl.title + ' (' + tpl.month + ')';
+    $('monthlyBlurb').textContent = tpl.blurb;
+  }
+
+  function refreshUnlockUI() {
+    var u = unlock.getUnlocks();
+    var list = $('unlockList');
+    list.innerHTML = '';
+    ['oto1', 'oto2', 'oto3'].forEach(function (key) {
+      var li = document.createElement('li');
+      li.textContent = (u[key] ? '✅ Unlocked: ' : '🔒 Locked: ') + OTO_LABELS[key];
+      list.appendChild(li);
+    });
+    // OTO1 puzzle checkboxes
+    document.querySelectorAll('input[data-oto="oto1"]').forEach(function (cb) {
+      cb.disabled = !u.oto1;
+      if (!u.oto1) cb.checked = false;
+    });
+    // commercial license checkbox
+    var cl = $('commercialLicense');
+    cl.disabled = !u.oto2;
+    cl.checked = u.oto2 && unlock.getCommercial();
+    $('commercialNote').textContent = u.oto2 ? '' : '(Unlock OTO2 to use this.)';
+    updateCounter();
+    buildThemeCards();
+    buildLibrarySelect();
+    buildMonthlyCard();
+  }
+
+  function updateCounter() {
+    var used = unlock.booksThisMonth();
+    var limit = unlock.booksLimit();
+    $('bookCounter').textContent = limit === Infinity
+      ? 'Books made this month: ' + used + ' — Unlimited (OTO2 unlocked).'
+      : 'Books made this month: ' + used + ' of ' + limit + '. Upgrade to OTO2 for unlimited books.';
+  }
+
+  function selectedTypes() {
+    var types = [];
+    ['maze', 'wordsearch', 'dot', 'nonogram', 'sudoku', 'spotdiff', 'colorbynumber', 'logic'].forEach(function (t) {
+      var el = $('type-' + t);
+      if (el && el.checked) types.push(t);
+    });
+    return types.length ? types : ['maze'];
+  }
+
+  function generateBook() {
+    if (!unlock.canGenerate()) {
+      $('generateStatus').textContent = 'You have made 20 books this month — the front-end limit. Unlock OTO2 for unlimited books, or come back next month.';
+      return;
+    }
+    var types = selectedTypes();
+    var difficulty = $('difficulty').value;
+    var pageCount = parseInt($('pageCount').value, 10);
+    var size = $('pageSize').value;
+    var customTheme = state.libraryTopic ? oto.themeFromLibrary(state.libraryTopic) : null;
+    state.book = core.buildBook({
+      theme: state.theme,
+      customTheme: customTheme,
+      difficulty: difficulty,
+      pageCount: pageCount,
+      types: types,
+      size: size,
+      coverPalette: state.coverPalette,
+      oto: oto,
+      commercialLicense: $('commercialLicense').checked && unlock.isUnlocked('oto2')
+    });
+    unlock.recordBook();
+    updateCounter();
+    state.pageIndex = 0;
+    $('previewPanel').classList.remove('hidden');
+    $('againBtn').disabled = false;
+    $('generateStatus').textContent = '';
+    $('bookTitle').textContent = state.book.meta.title;
+    var counts = { maze: 0, wordsearch: 0, dot: 0, nonogram: 0, sudoku: 0, spotdiff: 0, colorbynumber: 0, logic: 0 };
+    state.book.pages.forEach(function (p) { if (counts[p.type] != null) counts[p.type]++; });
+    var parts = [];
+    if (counts.maze) parts.push(counts.maze + ' mazes');
+    if (counts.wordsearch) parts.push(counts.wordsearch + ' word searches');
+    if (counts.dot) parts.push(counts.dot + ' dot-to-dot');
+    if (counts.nonogram) parts.push(counts.nonogram + ' nonograms');
+    if (counts.sudoku) parts.push(counts.sudoku + ' sudoku');
+    if (counts.spotdiff) parts.push(counts.spotdiff + ' spot-the-difference');
+    if (counts.colorbynumber) parts.push(counts.colorbynumber + ' color-by-number');
+    if (counts.logic) parts.push(counts.logic + ' logic puzzles');
+    $('bookMeta').textContent =
+      state.book.meta.difficultyLabel + '  |  ' + state.book.meta.pageCount + ' puzzle pages  |  ' +
+      parts.join(', ') + '  |  ' +
+      (size === 'letter' ? 'US Letter 8.5 x 11 in' : 'A4 8.27 x 11.69 in') + '  |  Answer key included.' +
+      (state.book.meta.commercialLicense ? '  |  Commercial license on.' : '');
+    renderPage();
+    $('previewPanel').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function renderPage() {
+    if (!state.book) return;
+    var page = state.book.pages[state.pageIndex];
+    var size = state.book.meta.size === 'a4' ? { w: 595, h: 842 } : { w: 612, h: 792 };
+    $('preview').innerHTML = svgLib.renderPage(page, size.w, size.h);
+    var label = page.type === 'cover' ? 'Cover' : page.type === 'answers' ? 'Answer Key' : 'Page ' + (state.pageIndex + 1) + ' of ' + state.book.pages.length;
+    $('pageIndicator').textContent = label;
+    $('prevPage').disabled = state.pageIndex === 0;
+    $('nextPage').disabled = state.pageIndex === state.book.pages.length - 1;
+  }
+
+  function downloadPDF() {
+    if (!state.book) return;
+    var bytes = pdfLib.buildPDF(state.book, state.book.meta.size);
+    var blob = new Blob([bytes], { type: 'application/pdf' });
+    var a = document.createElement('a');
+    var name = state.book.meta.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + state.book.meta.size + '.pdf';
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  $('pageCount').addEventListener('input', function (e) {
+    $('pageCountLabel').textContent = e.target.value;
+  });
+  $('generateBtn').addEventListener('click', generateBook);
+  $('againBtn').addEventListener('click', generateBook);
+  $('prevPage').addEventListener('click', function () {
+    if (state.pageIndex > 0) { state.pageIndex--; renderPage(); }
+  });
+  $('nextPage').addEventListener('click', function () {
+    if (state.book && state.pageIndex < state.book.pages.length - 1) { state.pageIndex++; renderPage(); }
+  });
+  $('downloadBtn').addEventListener('click', downloadPDF);
+
+  $('commercialLicense').addEventListener('change', function (e) {
+    if (!unlock.isUnlocked('oto2')) { e.target.checked = false; return; }
+    unlock.setCommercial(e.target.checked);
+    if (state.book) {
+      state.book.meta.commercialLicense = e.target.checked;
+      state.book.pages[0].commercialLicense = e.target.checked;
+      renderPage();
+    }
+  });
+
+  $('unlockBtn').addEventListener('click', function () {
+    var code = $('unlockCode').value;
+    var res = unlock.unlock(code);
+    if (res.ok) {
+      $('unlockStatus').textContent = 'Unlocked! ' + OTO_LABELS[res.oto] + ' is now open.';
+      $('unlockCode').value = '';
+    } else {
+      $('unlockStatus').textContent = res.error;
+    }
+    refreshUnlockUI();
+  });
+  $('unlockCode').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('unlockBtn').click();
+  });
+
+  $('monthlyUseBtn').addEventListener('click', function () {
+    var tpl = oto.getMonthlyTemplate(new Date());
+    state.theme = tpl.theme;
+    state.libraryTopic = null;
+    var sel = $('libraryTopic');
+    if (sel) sel.value = '';
+    $('difficulty').value = tpl.difficulty;
+    $('pageCount').value = tpl.pageCount;
+    $('pageCountLabel').textContent = tpl.pageCount;
+    tpl.types.forEach(function (t) {
+      var el = $('type-' + t);
+      if (el && !el.disabled) el.checked = true;
+    });
+    buildThemeCards();
+    generateBook();
+  });
+
+  refreshUnlockUI();
+  buildPalettePicker();
+})();
+
+</script>
+</body>
+</html>
